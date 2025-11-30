@@ -48,7 +48,7 @@ jobs:
         run: |
           cargo build --release --profile dev --features with_py --package infraweave_py
         env:
-          CARGO_LOG=cargo::core::compiler::fingerprint=debug
+          CARGO_LOG: "cargo::core::compiler::fingerprint=debug"
 
       - name: Set up Python
         uses: actions/setup-python@v4
