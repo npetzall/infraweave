@@ -46,7 +46,7 @@ jobs:
 
       - name: Build all targets, all features
         run: |
-          cargo build --release --profile dev --features with_py --package infraweave_py
+          cargo build --profile dev --features with_py --package infraweave_py
         env:
           CARGO_LOG: "cargo::core::compiler::fingerprint=debug"
 
