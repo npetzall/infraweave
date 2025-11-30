@@ -62,14 +62,14 @@ jobs:
         env:
           CIBW_ARCHS: ${{ matrix.arch }}
           CIBW_BUILD: ${{ matrix.cibw-build }}
-          CIBW_ENVIRONMENT: |
+          CIBW_ENVIRONMENT: >-
             PATH=/host/home/runner/.cargo/bin:/host/home/runner/.rustup/bin:$PATH
             CARGO_HOME=/host/home/runner/.cargo
             RUSTUP_HOME=/host/home/runner/.rustup
             CARGO_TARGET_DIR=/host${{ github.workspace }}/target
-          CIBW_BEFORE_BUILD_LINUX: |
-            rustup show
-            rustup override set stable
+          CIBW_BEFORE_BUILD_LINUX: >-
+            rustup show &&
+            rustup override set stable &&
             rustup show
         run: |
           cibuildwheel infraweave_py --output-dir dist
