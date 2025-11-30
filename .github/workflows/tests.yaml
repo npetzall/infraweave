@@ -219,10 +219,15 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           cp -r env_common infraweave_py/env_common
+          sed -i '/^\[lints\]$/,/^workspace = true$/d' infraweave_py/env_common/Cargo.toml
           cp -r defs infraweave_py/defs
+          sed -i '/^\[lints\]$/,/^workspace = true$/d' infraweave_py/env_defs/Cargo.toml
           cp -r utils infraweave_py/utils
+          sed -i '/^\[lints\]$/,/^workspace = true$/d' infraweave_py/utils/Cargo.toml
           cp -r env_aws infraweave_py/env_aws
+          sed -i '/^\[lints\]$/,/^workspace = true$/d' infraweave_py/env_aws/Cargo.toml
           cp -r env_azure infraweave_py/env_azure
+          sed -i '/^\[lints\]$/,/^workspace = true$/d' infraweave_py/env_azure/Cargo.toml
 
       - name: Adjust Cargo.toml paths for dockerized build
         if: runner.os == 'Linux'
