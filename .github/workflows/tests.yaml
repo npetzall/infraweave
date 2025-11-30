@@ -32,15 +32,10 @@ jobs:
       - name: Rust Cache
         uses: Swatinem/rust-cache@f13886b937689c021905a6b90929199931d60db1 # v2.8.1
         with:
-          shared-key: "build-n-test"
+          shared-key: "dependencies"
 
       - name: Build dev with warnings as errors
         run: cargo build --all-targets
-        env:
-          RUSTFLAGS: "-D warnings"
-  
-      - name: Build test, don't run
-        run: cargo test --no-run --all-targets
 
   lint:
     needs: build
@@ -59,7 +54,7 @@ jobs:
       - name: Rust Cache
         uses: Swatinem/rust-cache@f13886b937689c021905a6b90929199931d60db1 # v2.8.1
         with:
-          shared-key: "build-n-test"
+          shared-key: "dependencies"
 
       - name: Run cargo fmt
         run: cargo fmt
@@ -88,7 +83,7 @@ jobs:
       - name: Rust Cache
         uses: Swatinem/rust-cache@f13886b937689c021905a6b90929199931d60db1 # v2.8.1
         with:
-          shared-key: "build-n-test"
+          shared-key: "dependencies"
 
       - name: Run unit tests
         run: cargo test --workspace --exclude integration-tests
@@ -115,7 +110,7 @@ jobs:
       - name: Rust Cache
         uses: Swatinem/rust-cache@f13886b937689c021905a6b90929199931d60db1 # v2.8.1
         with:
-          shared-key: "build-n-test"
+          shared-key: "dependencies"
 
       - name: Run integration tests for ${{ matrix.provider }}
         run: |

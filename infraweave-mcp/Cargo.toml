@@ -3,6 +3,9 @@ name = "infraweave-mcp"
 version = "0.1.0"
 edition = "2021"
 
+[lints]
+workspace = true
+
 [dependencies]
 rmcp-openapi = "0.20"
 rmcp = "0.8"

@@ -4,6 +4,9 @@ version = "0.1.0"
 edition = "2021"
 license-file = "../LICENSE"
 
+[lints]
+workspace = true
+
 [dependencies]
 async-trait = "0.1.50"
 aws-config = { version = "1.5", features = ["behavior-version-latest"] }

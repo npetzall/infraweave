@@ -9,8 +9,7 @@ build-operator:
 	DOCKER_BUILDKIT=1 docker build -t infraweave-operator -f operator/Dockerfile .
 
 build-check:
-	@echo "Building with warnings as errors..."
-	RUSTFLAGS="-D warnings" cargo build --all-targets
+	cargo build --all-targets
 
 unit-tests: build-check
 	cargo test --workspace --exclude integration-tests

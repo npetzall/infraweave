@@ -4,6 +4,9 @@ version = "0.1.0"
 edition = "2021"
 license-file = "../LICENSE"
 
+[lints]
+workspace = true
+
 [dependencies]
 zip = "0.6.6"
 walkdir = "2.3"
