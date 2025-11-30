@@ -46,7 +46,7 @@ jobs:
 
       - name: Build all targets, all features
         run: |
-          cargo build --all-targets --features with_py --project infraweave_py
+          cargo build --all-targets --features with_py --package infraweave_py
 
       - name: Set up Python
         uses: actions/setup-python@v4
