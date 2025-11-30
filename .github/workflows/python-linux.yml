@@ -62,9 +62,14 @@ jobs:
         env:
           CIBW_ARCHS: ${{ matrix.arch }}
           CIBW_BUILD: ${{ matrix.cibw-build }}
+          CIBW_ENVIRONMENT: |
+            PATH=/host/home/runner/.cargo/bin:$PATH
+            CARGO_HOME=/host/home/runner/.cargo
           CIBW_BEFORE_BUILD_LINUX: |
             yum install -y perl-core
-            rustup default stable
+            rustup show
+            rustup set override stable
+            rustup show
         run: |
           cibuildwheel infraweave_py --output-dir dist
 
