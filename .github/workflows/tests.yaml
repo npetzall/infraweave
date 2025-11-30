@@ -26,19 +26,24 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
+          components: rustfmt, clippy
           override: true
 
       - name: Rust Cache
         uses: Swatinem/rust-cache@f13886b937689c021905a6b90929199931d60db1 # v2.8.1
         with:
-          shared-key: "build"
+          shared-key: "build-n-test"
 
-      - name: Build with warnings as errors
+      - name: Build dev with warnings as errors
         run: cargo build --all-targets
         env:
           RUSTFLAGS: "-D warnings"
+  
+      - name: Build test, don't run
+        run: cargo test --no-run --all-targets
 
   lint:
+    needs: build
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -54,7 +59,7 @@ jobs:
       - name: Rust Cache
         uses: Swatinem/rust-cache@f13886b937689c021905a6b90929199931d60db1 # v2.8.1
         with:
-          shared-key: "lint"
+          shared-key: "build-n-test"
 
       - name: Run cargo fmt
         run: cargo fmt
@@ -63,6 +68,7 @@ jobs:
         run: cargo clippy
 
   unit-tests:
+    needs: build
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -82,12 +88,13 @@ jobs:
       - name: Rust Cache
         uses: Swatinem/rust-cache@f13886b937689c021905a6b90929199931d60db1 # v2.8.1
         with:
-          shared-key: "unit-tests"
+          shared-key: "build-n-test"
 
       - name: Run unit tests
-        run: make unit-tests
+        run: cargo test --workspace --exclude integration-tests
 
   integration-tests:
+    needs: build
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -108,7 +115,7 @@ jobs:
       - name: Rust Cache
         uses: Swatinem/rust-cache@f13886b937689c021905a6b90929199931d60db1 # v2.8.1
         with:
-          shared-key: "integration-${{ matrix.provider }}"
+          shared-key: "build-n-test"
 
       - name: Run integration tests for ${{ matrix.provider }}
         run: |
