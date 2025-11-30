@@ -221,7 +221,7 @@ jobs:
           cp -r env_common infraweave_py/env_common
           sed -i '/^\[lints\]$/,/^workspace = true$/d' infraweave_py/env_common/Cargo.toml
           cp -r defs infraweave_py/defs
-          sed -i '/^\[lints\]$/,/^workspace = true$/d' infraweave_py/env_defs/Cargo.toml
+          sed -i '/^\[lints\]$/,/^workspace = true$/d' infraweave_py/defs/Cargo.toml
           cp -r utils infraweave_py/utils
           sed -i '/^\[lints\]$/,/^workspace = true$/d' infraweave_py/utils/Cargo.toml
           cp -r env_aws infraweave_py/env_aws
@@ -236,6 +236,7 @@ jobs:
           sed -i 's#path = "../env_common"#path = "env_common"#' Cargo.toml
           sed -i 's#path = "../defs"#path = "defs"#' Cargo.toml
           sed -i 's#path = "../utils"#path = "utils"#' Cargo.toml
+          sed -i '/^\[lints\]$/,/^workspace = true$/d' Cargo.toml
 
       - name: Build Wheels
         working-directory: infraweave_py
