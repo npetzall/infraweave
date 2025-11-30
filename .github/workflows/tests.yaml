@@ -60,7 +60,7 @@ jobs:
         run: cargo fmt
 
       - name: Run cargo clippy
-        run: cargo clippy
+        run: cargo clippy -- -W warnings
 
   unit-tests:
     needs: build
