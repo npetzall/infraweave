@@ -65,10 +65,10 @@ jobs:
           CIBW_ENVIRONMENT: |
             PATH=/host/home/runner/.cargo/bin:$PATH
             CARGO_HOME=/host/home/runner/.cargo
+            RUSTUP_HOME=/host/home/runner/.rustup
           CIBW_BEFORE_BUILD_LINUX: |
-            yum install -y perl-core
             rustup show
-            rustup set override stable
+            rustup override set stable
             rustup show
         run: |
           cibuildwheel infraweave_py --output-dir dist
