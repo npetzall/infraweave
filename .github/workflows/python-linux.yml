@@ -46,7 +46,9 @@ jobs:
 
       - name: Build all targets, all features
         run: |
-          cargo build --all-targets --features with_py --package infraweave_py
+          cargo build --release --profile dev --features with_py --package infraweave_py
+        env:
+          CARGO_LOG=cargo::core::compiler::fingerprint=debug
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -71,6 +73,7 @@ jobs:
             CARGO_HOME=/host/home/runner/.cargo
             RUSTUP_HOME=/host/home/runner/.rustup
             CARGO_TARGET_DIR=/host${{ github.workspace }}/target
+            CARGO_LOG=cargo::core::compiler::fingerprint=debug
           CIBW_BEFORE_BUILD_LINUX: >-
             yum install -y perl-core
         run: |
