@@ -69,8 +69,8 @@ jobs:
             CARGO_TARGET_DIR=${{ github.workspace }}/target
             CARGO_LOG=cargo::core::compiler::fingerprint=debug
           CIBW_BEFORE_BUILD_LINUX: >-
-            mkdir -p /home/runner
-            mount --bind /host/home/runner /home/runner
+            mkdir -p /home/runner &&
+            mount --bind /host/home/runner /home/runner &&
             yum install -y perl-core
         run: |
           cibuildwheel infraweave_py --output-dir dist
