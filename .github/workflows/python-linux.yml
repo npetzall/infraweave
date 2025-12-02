@@ -70,7 +70,7 @@ jobs:
             CARGO_LOG=cargo::core::compiler::fingerprint=debug
           CIBW_BEFORE_BUILD_LINUX: >-
             mkdir -p /home/runner &&
-            mount --bind /host/home/runner /home/runner &&
+            sudo mount --bind /host/home/runner /home/runner &&
             yum install -y perl-core
         run: |
           cibuildwheel infraweave_py --output-dir dist
