@@ -21,3 +21,59 @@ members = [
 
 [workspace.lints.rust]
 warnings = "deny"
+
+[workspace.dependencies]
+# Core serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+serde_yaml = "0.8"
+
+# Async runtime
+tokio = { version = "1", features = ["full"] }
+futures = "0.3.31"
+async-trait = "0.1.50"
+
+# Error handling
+anyhow = "1.0"
+thiserror = "1.0.68"
+
+# Logging
+log = "0.4"
+
+# HTTP client
+reqwest = { version = "0.12", features = ["json"] }
+
+# Cryptography & TLS
+openssl = { version = "0.10", features = ["vendored"] }
+rustls = "0.23.18"
+base64 = "0.22"
+
+# Date/time
+chrono = "0.4"
+
+# Text processing
+regex = "1.11.0"
+
+# Terraform/HCL
+hcl-rs = "0.18.4"
+
+# Web framework
+axum = "0.8.1"
+tower = "0.5"
+
+# OpenAPI
+utoipa = "5.3.1"
+
+# JWT
+jsonwebtoken = "9.3.1"
+
+# Utilities
+rand = "0.8"
+dirs = "5.0"
+
+# Testing
+pretty_assertions = "1.4.1"
+
+# AWS SDK
+aws-config = { version = "1.5", features = ["behavior-version-latest"] }
+aws-sdk-ssm = "1.67.0"
