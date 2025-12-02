@@ -44,12 +44,6 @@ jobs:
         with:
           shared-key: "dependencies"
 
-      - name: Build all targets, all features
-        run: |
-          cargo build --profile dev --features with_py --package infraweave_py
-        env:
-          CARGO_LOG: "cargo::core::compiler::fingerprint=debug"
-
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
@@ -69,12 +63,14 @@ jobs:
           CIBW_ARCHS: ${{ matrix.arch }}
           CIBW_BUILD: ${{ matrix.cibw-build }}
           CIBW_ENVIRONMENT: >-
-            PATH=/host/home/runner/.cargo/bin:/host/home/runner/.rustup/bin:$PATH
-            CARGO_HOME=/host/home/runner/.cargo
-            RUSTUP_HOME=/host/home/runner/.rustup
-            CARGO_TARGET_DIR=/host${{ github.workspace }}/target
+            PATH=/home/runner/.cargo/bin:/home/runner/.rustup/bin:$PATH
+            CARGO_HOME=/home/runner/.cargo
+            RUSTUP_HOME=/home/runner/.rustup
+            CARGO_TARGET_DIR=${{ github.workspace }}/target
             CARGO_LOG=cargo::core::compiler::fingerprint=debug
           CIBW_BEFORE_BUILD_LINUX: >-
+            mkdir -p /home/runner
+            mount --bind /host/home/runner /home/runner
             yum install -y perl-core
         run: |
           cibuildwheel infraweave_py --output-dir dist
