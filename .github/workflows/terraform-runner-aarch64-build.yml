@@ -1,0 +1,38 @@
+name: Build terraform_runner for aarch64
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-aarch64:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: stable
+          targets: aarch64-unknown-linux-gnu,x86_64-unknown-linux-gnu
+
+      - name: Setup Cache for Cargo
+        uses: Swatinem/rust-cache@v2
+
+      - name: Install cross
+        run: cargo install cross --locked
+
+      - name: Build terraform_runner for aarch64
+        run: cross build -p terraform_runner --verbose --locked --release --target aarch64-unknown-linux-gnu
+
+      - name: Upload Binary as Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform_runner-aarch64
+          path: target/aarch64-unknown-linux-gnu/release/terraform_runner
+          retention-days: 7
+
