@@ -48,7 +48,7 @@ jobs:
           files: terraform_runner/bake.hcl
           push: false
           set: |
-            *.platforms=${{ vars.IMAGE_PLATFORMS || 'linux/amd64' }}
+            *.platforms="${{ vars.IMAGE_PLATFORMS || 'linux/amd64' }}"
             *.cache-from=type=gha
             *.cache-to=type=gha,mode=max
             chef.cache-from=type=gha,scope=chef
