@@ -45,6 +45,7 @@ jobs:
       - name: Build and push with Bake
         uses: docker/bake-action@v6
         with:
+          source: .
           files: terraform_runner/bake.hcl
           push: false
           set: |
