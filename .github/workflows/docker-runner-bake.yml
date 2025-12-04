@@ -49,27 +49,6 @@ jobs:
           files: terraform_runner/bake.hcl
           push: false
           set: |
-            *.platforms="${{ vars.IMAGE_PLATFORMS || 'linux/amd64' }}"
-            *.cache-from=type=gha
-            *.cache-to=type=gha,mode=max
-            chef.cache-from=type=gha,scope=chef
-            chef.cache-to=type=gha,mode=max,scope=chef
-            planner.cache-from=type=gha,scope=planner
-            planner.cache-to=type=gha,mode=max,scope=planner
-            dependencies.cache-from=type=gha,scope=dependencies
-            dependencies.cache-to=type=gha,mode=max,scope=dependencies
-            terraform-stage.cache-from=type=gha,scope=terraform-stage
-            terraform-stage.cache-to=type=gha,mode=max,scope=terraform-stage
-            tofu-stage.cache-from=type=gha,scope=tofu-stage
-            tofu-stage.cache-to=type=gha,mode=max,scope=tofu-stage
-            opa-stage.cache-from=type=gha,scope=opa
-            opa-stage.cache-to=type=gha,mode=max,scope=opa
-            builder-stage.cache-from=type=gha,scope=runner-builder
-            builder-stage.cache-to=type=gha,mode=max,scope=runner-builder
-            runner-terraform.cache-from=type=gha,scope=runner-terraform
-            runner-terraform.cache-to=type=gha,mode=max,scope=runner-terraform
-            runner-tofu.cache-from=type=gha,scope=runner-tofu
-            runner-tofu.cache-to=type=gha,mode=max,scope=runner-tofu
             runner-terraform.tags=${{ env.GHCR_REGISTRY }}/${{ env.GHCR_REPO }}/runner:${{ env.VERSION }}-terraform
             runner-tofu.tags=${{ env.GHCR_REGISTRY }}/${{ env.GHCR_REPO }}/runner:${{ env.VERSION }}-tofu
 
