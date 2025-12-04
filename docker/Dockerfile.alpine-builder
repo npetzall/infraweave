@@ -1,0 +1,27 @@
+FROM rust:1.88-alpine AS chef
+
+RUN apk add --no-cache \
+    build-base \
+    musl-dev \
+    openssl-dev \
+    pkgconfig \
+    perl \
+    git \
+    wget \
+    unzip \
+    make && \
+    cargo install cargo-chef
+
+WORKDIR /app
+
+
+FROM chef AS planner
+COPY . .
+RUN cargo chef prepare --recipe-path recipe.json
+
+
+FROM chef AS dependencies
+RUN rustup target add aarch64-unknown-linux-musl
+COPY --from=planner /app/recipe.json recipe.json
+RUN cargo chef cook --release --bins --recipe-path recipe.json
+
