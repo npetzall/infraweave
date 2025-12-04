@@ -3,6 +3,7 @@ target "chef" {
   context = "."
   dockerfile = "docker/Dockerfile.alpine-builder"
   target = "chef"
+  platforms = ["linux/arm64"]
 }
 
 # Build planner stage (prepares recipe.json from source)
@@ -13,6 +14,7 @@ target "planner" {
   contexts = {
     chef = "target:chef"
   }
+  platforms = ["linux/arm64"]
 }
 
 # Build dependencies stage (compiles Rust dependencies)
@@ -24,6 +26,7 @@ target "dependencies" {
     chef = "target:chef"
     planner = "target:planner"
   }
+  platforms = ["linux/arm64"]
 }
 
 # Build the terraform stage (depends on chef)
@@ -34,6 +37,7 @@ target "terraform-stage" {
   contexts = {
     chef = "target:chef"
   }
+  platforms = ["linux/arm64"]
 }
 
 # Build the tofu stage (depends on chef)
@@ -44,6 +48,7 @@ target "tofu-stage" {
   contexts = {
     chef = "target:chef"
   }
+  platforms = ["linux/arm64"]
 }
 
 # Build the opa stage (depends on chef)
@@ -54,6 +59,7 @@ target "opa-stage" {
   contexts = {
     chef = "target:chef"
   }
+  platforms = ["linux/arm64"]
 }
 
 # Build the builder stage (depends on dependencies)
@@ -64,6 +70,7 @@ target "builder-stage" {
   contexts = {
     dependencies = "target:dependencies"
   }
+  platforms = ["linux/arm64"]
 }
 
 # Runner using terraform
@@ -79,6 +86,7 @@ target "runner-terraform" {
     REGISTRY_API_HOSTNAME = "registry.terraform.io"
   }
   tags = ["runner:terraform"]
+  platforms = ["linux/arm64"]
 }
 
 # Runner using tofu (map tofu stage to terraform context)
@@ -94,6 +102,7 @@ target "runner-tofu" {
     REGISTRY_API_HOSTNAME = "registry.opentofu.org"
   }
   tags = ["runner:tofu"]
+  platforms = ["linux/arm64"]
 }
 
 # Build both runners
