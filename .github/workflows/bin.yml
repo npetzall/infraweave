@@ -49,7 +49,7 @@ on:
         required: false
         type: string
         description: Version of the CLI to build (e.g., 0.1.0)
-        default: dev
+        default: 0.0.0-manual
 env:
   VERSION: ${{ inputs.version }}
 
@@ -72,18 +72,11 @@ jobs:
           shared-key: "deps-${{ inputs.target }}"
           save-if: ${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) }}
 
-      - name: Install cross and build all targets
-        if: runner.os != 'Windows'
-        shell: bash
-        run: |
-          cargo install cross --locked
-          cross build --release --locked --target ${{ inputs.target }} --all-targets --workspace --exclude infraweave_py
+      - name: Install cross
+        run: cargo install cross --locked
 
       - name: Build all targets
-        if: runner.os == 'Windows'
-        shell: bash
-        run: |
-          cargo build --release --locked --target ${{ inputs.target }} --all-targets --workspace --exclude infraweave_py
+        run: cross build --release --verbose --locked --target ${{ inputs.target }} --all-targets --workspace --exclude infraweave_py
 
   build:
     needs: setup
@@ -104,17 +97,11 @@ jobs:
           shared-key: "deps-${{ inputs.target }}"
           save-if: ${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) }}
 
-      - name: Install cross and build CLI
-        if: runner.os != 'Windows'
-        shell: bash
-        run: | 
-          cargo install cross --locked
-          cross build --release --locked --target ${{ inputs.target }} --package ${{ inputs.bin }}
+      - name: Install cross
+        run: cargo install cross --locked
 
-      - name: Build CLI (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: cargo build --release --locked --target ${{ inputs.target }} --package ${{ inputs.bin }}
+      - name: Build ${{{ inputs.bin }}}
+        run: cross build --release --verbose --locked --target ${{ inputs.target }} --package ${{ inputs.bin }}
 
       - name: Prepare artifact (Windows)
         if: runner.os == 'Windows'
