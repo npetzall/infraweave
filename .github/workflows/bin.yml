@@ -1,0 +1,143 @@
+name: Build CLI (Reusable)
+
+on:
+  workflow_call:
+    inputs:
+      bin:
+        required: true
+        type: string
+        description: Binary name (e.g., cli)
+      name:
+        required: true
+        type: string
+        description: Name identifier for this build (e.g., linux-amd64)
+      runner:
+        required: true
+        type: string
+        description: GitHub Actions runner to use (e.g., ubuntu-latest)
+      target:
+        required: true
+        type: string
+        description: Rust target triple (e.g., x86_64-unknown-linux-gnu)
+      version:
+        required: true
+        type: string
+        description: Version of the CLI to build (e.g., 0.1.0)
+  workflow_dispatch:
+    inputs:
+      bin:
+        required: false
+        type: string
+        description: Binary name (e.g., cli)
+        default: cli
+      name:
+        required: false
+        type: string
+        description: Name identifier for this build (e.g., linux-amd64)
+        default: linux-arm64
+      runner:
+        required: false
+        type: string
+        description: GitHub Actions runner to use (e.g., ubuntu-latest)
+        default: ubuntu-latest
+      target:
+        required: false
+        type: string
+        description: Rust target triple (e.g., x86_64-unknown-linux-gnu)
+        default: aarch64-unknown-linux-gnu
+      version:
+        required: false
+        type: string
+        description: Version of the CLI to build (e.g., 0.1.0)
+        default: dev
+env:
+  VERSION: ${{ inputs.version }}
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@fcf085fcb4b8f63f96906cd713eb52181b2ea4
+        with:
+          toolchain: stable
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@9d47c6ad4b02e050fd481d890b2ea34778fd09d6
+        with:
+          shared-key: "deps-${{ inputs.target }}"
+          save-if: ${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) }}
+
+      - name: Install target
+        shell: bash
+        run: rustup target add ${{ inputs.target }}
+
+      - name: Install cross and build all targets
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          cargo install cross --git https://github.com/cross-rs/cross
+          cross build --release --target ${{ inputs.target }} --all-targets
+
+      - name: Build all targets
+        if: runner.os = 'Windows'
+        shell: bash
+        run: cargo build --release --target ${{ inputs.target }} --all-targets
+
+  build:
+    needs: setup
+    runs-on: ${{ inputs.runner }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@fcf085fcb4b8f63f96906cd713eb52181b2ea4
+        with:
+          toolchain: stable
+        
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@9d47c6ad4b02e050fd481d890b2ea34778fd09d6
+        with:
+          shared-key: "deps-${{ inputs.target }}"
+          save-if: ${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) }}
+
+      - name: Install target
+        run: rustup target add ${{ inputs.target }}
+
+      - name: Install cross and build CLI
+        if: runner.os != 'Windows'
+        shell: bash
+        run: | 
+          cargo install cross --git https://github.com/cross-rs/cross
+          cross build --release --target ${{ inputs.target }} --package ${{ inputs.bin }}
+
+      - name: Build CLI (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: cargo build --release --target ${{ inputs.target }} --package ${{ inputs.bin }}
+
+      - name: Prepare artifact (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          mkdir -p release
+          cp target/${{ inputs.target }}/release/${{ inputs.bin }}.exe "release/${{ inputs.bin }}-${{ inputs.name }}.exe"
+          
+      - name: Prepare artifact (Unix)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          mkdir -p release
+          cp target/${{ inputs.target }}/release/${{ inputs.bin }} "release/${{ inputs.bin }}-${{ inputs.name }}"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.bin }}-${{ inputs.name }}
+          path: release/*
+          retention-days: 7
+
