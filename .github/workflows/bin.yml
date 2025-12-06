@@ -83,7 +83,7 @@ jobs:
           cross build --release --target ${{ inputs.target }} --all-targets
 
       - name: Build all targets
-        if: runner.os = 'Windows'
+        if: runner.os == 'Windows'
         shell: bash
         run: cargo build --release --target ${{ inputs.target }} --all-targets
 
