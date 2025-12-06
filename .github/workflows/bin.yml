@@ -79,6 +79,7 @@ jobs:
         run: cross build --release --verbose --locked --target ${{ inputs.target }} --all-targets --workspace --exclude infraweave_py
 
   build:
+    name: Build ${{ inputs.bin }} (${{ inputs.name }})
     needs: setup
     runs-on: ${{ inputs.runner }}
     steps:
@@ -100,7 +101,7 @@ jobs:
       - name: Install cross
         run: cargo install cross --locked
 
-      - name: Build ${{{ inputs.bin }}}
+      - name: Build
         run: cross build --release --verbose --locked --target ${{ inputs.target }} --package ${{ inputs.bin }}
 
       - name: Prepare artifact (Windows)
