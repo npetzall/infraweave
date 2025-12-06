@@ -80,12 +80,13 @@ jobs:
         shell: bash
         run: |
           cargo install cross --git https://github.com/cross-rs/cross
-          cross build --release --target ${{ inputs.target }} --all-targets --exclude infraweave_py
+          cross build --release --target ${{ inputs.target }} --all-targets --workspace --exclude infraweave_py
 
       - name: Build all targets
         if: runner.os == 'Windows'
         shell: bash
-        run: cargo build --release --target ${{ inputs.target }} --all-targets --exclude infraweave_py
+        run: |
+          cargo build --release --target ${{ inputs.target }} --all-targets --workspace --exclude infraweave_py
 
   build:
     needs: setup
