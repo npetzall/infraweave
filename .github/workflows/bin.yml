@@ -64,6 +64,7 @@ jobs:
         uses: dtolnay/rust-toolchain@fcf085fcb4b4b8f63f96906cd713eb52181b5ea4
         with:
           toolchain: stable
+          targets: ${{ inputs.target }}
 
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@9d47c6ad4b02e050fd481d890b2ea34778fd09d6
@@ -71,22 +72,18 @@ jobs:
           shared-key: "deps-${{ inputs.target }}"
           save-if: ${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) }}
 
-      - name: Install target
-        shell: bash
-        run: rustup target add ${{ inputs.target }}
-
       - name: Install cross and build all targets
         if: runner.os != 'Windows'
         shell: bash
         run: |
-          cargo install cross --git https://github.com/cross-rs/cross
-          cross build --release --target ${{ inputs.target }} --all-targets --workspace --exclude infraweave_py
+          cargo install cross --locked
+          cross build --release --locked --target ${{ inputs.target }} --all-targets --workspace --exclude infraweave_py
 
       - name: Build all targets
         if: runner.os == 'Windows'
         shell: bash
         run: |
-          cargo build --release --target ${{ inputs.target }} --all-targets --workspace --exclude infraweave_py
+          cargo build --release --locked --target ${{ inputs.target }} --all-targets --workspace --exclude infraweave_py
 
   build:
     needs: setup
@@ -99,6 +96,7 @@ jobs:
         uses: dtolnay/rust-toolchain@fcf085fcb4b4b8f63f96906cd713eb52181b5ea4
         with:
           toolchain: stable
+          targets: ${{ inputs.target }}
         
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@9d47c6ad4b02e050fd481d890b2ea34778fd09d6
@@ -106,20 +104,17 @@ jobs:
           shared-key: "deps-${{ inputs.target }}"
           save-if: ${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) }}
 
-      - name: Install target
-        run: rustup target add ${{ inputs.target }}
-
       - name: Install cross and build CLI
         if: runner.os != 'Windows'
         shell: bash
         run: | 
-          cargo install cross --git https://github.com/cross-rs/cross
-          cross build --release --target ${{ inputs.target }} --package ${{ inputs.bin }}
+          cargo install cross --locked
+          cross build --release --locked --target ${{ inputs.target }} --package ${{ inputs.bin }}
 
       - name: Build CLI (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
-        run: cargo build --release --target ${{ inputs.target }} --package ${{ inputs.bin }}
+        run: cargo build --release --locked --target ${{ inputs.target }} --package ${{ inputs.bin }}
 
       - name: Prepare artifact (Windows)
         if: runner.os == 'Windows'
