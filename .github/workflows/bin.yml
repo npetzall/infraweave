@@ -76,7 +76,7 @@ jobs:
         run: cargo install cross --locked
 
       - name: Build all targets
-        run: cross build --release --verbose --locked --target ${{ inputs.target }} --all-targets --workspace --exclude infraweave_py
+        run: cross build --release --verbose --locked --target ${{ inputs.target }} --bins --workspace --exclude infraweave_py
 
   build:
     name: Build ${{ inputs.bin }} (${{ inputs.name }})
@@ -102,7 +102,7 @@ jobs:
         run: cargo install cross --locked
 
       - name: Build
-        run: cross build --release --verbose --locked --target ${{ inputs.target }} --package ${{ inputs.bin }}
+        run: cross build --release --verbose --locked --target ${{ inputs.target }} --bin ${{ inputs.bin }}
 
       - name: Prepare artifact (Windows)
         if: runner.os == 'Windows'
