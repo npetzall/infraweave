@@ -46,7 +46,7 @@ jobs:
                 rust_target: .value.rust_target,
                 runner: .value.runner,
                 bins: [$binaries[] | select(.targets | index($target_name)) | .bin],
-                cross: (.value.cross // true)
+                cross: (if (.value | has("cross")) then .value.cross else true end)
               }))
             }
           ' --argjson targets '${{ vars.BINARY_TARGETS }}' --argjson binaries '${{ vars.BINARIES }}')
