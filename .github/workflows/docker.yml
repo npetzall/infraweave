@@ -69,4 +69,4 @@ jobs:
             *.platform=${{ join(',', matrix.platforms) }}
         env:
           REGISTRY:${{ env.GHCR_REGISTRY }}/${{ env.GHCR_REPO }}
-          VERSION:${{ env.VERSION }}
+          VERSION:${{ inputs.version }}
