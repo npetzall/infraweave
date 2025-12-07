@@ -39,7 +39,7 @@ jobs:
       - name: Setup build matrix
         id: set-matrix
         run: |
-          matrix=$(jq -c '
+          matrix=$(echo 'null' | jq -c '
             {
               include: ($targets | to_entries | map(.key as $target_name | {
                 name: .key,
