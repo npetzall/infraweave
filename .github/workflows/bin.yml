@@ -30,7 +30,8 @@ jobs:
           ' <<< '${{ vars.BINARIES }}' | sort -u)
           
           if [ -n "$missing" ]; then
-            echo "::error::Missing BINARY_TARGETS: $missing"
+            missing_list=$(echo "$missing" | tr '\n' ',' | sed 's/,$//')
+            echo "::error::Missing BINARY_TARGETS: $missing_list"
             exit 1
           fi
         shell: bash
