@@ -1,0 +1,25 @@
+name: Main workflow
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        required: false
+        type: string
+        description: Version of the CLI to build (e.g., 0.1.0)
+        default: 0.0.0-manual
+
+jobs:
+  build:
+    uses: ./.github/workflows/bin.yml
+    with:
+      version: ${{ inputs.version }}
+    secrets: inherit
+
+  docker:
+    needs: build
+    uses: ./.github/workflows/docker.yml
+    with:
+      version: ${{ inputs.version }}
+    secrets: inherit
+

@@ -1,7 +1,9 @@
-FROM chef AS tofu
+FROM alpine:3.20 AS tofu
 ARG TARGETARCH
 
 ENV TOFU_VERSION=1.9.1
+
+RUN apk add --no-cache wget unzip
 
 RUN wget https://github.com/opentofu/opentofu/releases/download/v${TOFU_VERSION}/tofu_${TOFU_VERSION}_linux_${TARGETARCH}.zip && \
     unzip tofu_${TOFU_VERSION}_linux_${TARGETARCH}.zip && \
