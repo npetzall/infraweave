@@ -63,10 +63,10 @@ jobs:
         uses: docker/bake-action@v6
         with:
           source: .
-          files: ${{ inputs.bin }}/bake.hcl
+          files: ${{ matrix.bin }}/bake.hcl
           push: false
           set: |
             *.platform=${{ join(',', matrix.platforms) }}
         env:
-          REGISTRY:${{ env.GHCR_REGISTRY }}/${{ env.GHCR_REPO }}
-          VERSION:${{ inputs.version }}
+          REGISTRY: ${{ env.GHCR_REGISTRY }}/${{ env.GHCR_REPO }}
+          VERSION: ${{ inputs.version }}
