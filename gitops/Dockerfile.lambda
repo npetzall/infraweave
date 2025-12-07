@@ -1,4 +1,6 @@
 FROM gcr.io/distroless/cc-debian12
+ARG TARGETOS
+ARG TARGETARCH
 
 COPY binaries/gitops-${TARGETOS}-${TARGETARCH} /usr/local/bin/bootstrap
 
