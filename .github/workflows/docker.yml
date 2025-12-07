@@ -66,7 +66,7 @@ jobs:
           files: ${{ matrix.bin }}/bake.hcl
           push: false
           set: |
-            *.platform=${{ join(',', matrix.platforms) }}
+            *.platform=${{ join(matrix.platforms, ',') }}
         env:
           REGISTRY: ${{ env.GHCR_REGISTRY }}/${{ env.GHCR_REPO }}
           VERSION: ${{ inputs.version }}
