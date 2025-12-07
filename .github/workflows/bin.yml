@@ -30,8 +30,7 @@ jobs:
           ' <<< '${{ vars.BINARIES }}' | sort -u)
           
           if [ -n "$missing" ]; then
-            error_msg="The following targets in binaries are not found in targets:%0A$(echo "$missing" | sed 's/^/  - /' | tr '\n' '%0A')"
-            echo "::error::$error_msg"
+            echo "::error::Missing BINARY_TARGETS: $missing"
             exit 1
           fi
         shell: bash
