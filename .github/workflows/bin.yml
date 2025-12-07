@@ -46,7 +46,7 @@ jobs:
               runner: .value.runner,
               bins: [$binaries[] | select(.targets | index(.key)) | .bin]
             })
-          ' --argjson targets "${{ vars.BINARY_TARGETS }}" --argjson binaries "${{ vars.BINARIES }}")
+          ' --argjson targets '${{ vars.BINARY_TARGETS }}' --argjson binaries '${{ vars.BINARIES }}')
           
           echo "matrix<<EOF" >> $GITHUB_OUTPUT
           echo "$matrix" >> $GITHUB_OUTPUT
