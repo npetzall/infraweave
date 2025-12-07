@@ -40,17 +40,17 @@ jobs:
         id: set-matrix
         run: |
           matrix=$(jq -c '
-            $targets | to_entries | map({
-              name: .key,
-              rust_target: .value.rust_target,
-              runner: .value.runner,
-              bins: [$binaries[] | select(.targets | index(.key)) | .bin]
-            })
+            {
+              include: ($targets | to_entries | map(.key as $target_name | {
+                name: .key,
+                rust_target: .value.rust_target,
+                runner: .value.runner,
+                bins: [$binaries[] | select(.targets | index($target_name)) | .bin]
+              }))
+            }
           ' --argjson targets '${{ vars.BINARY_TARGETS }}' --argjson binaries '${{ vars.BINARIES }}')
           
-          echo "matrix<<EOF" >> $GITHUB_OUTPUT
-          echo "$matrix" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          echo "matrix=$matrix" >> $GITHUB_OUTPUT
         shell: bash
 
       
