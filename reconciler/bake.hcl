@@ -16,5 +16,5 @@ target "reconciler-aws" {
 }
 
 group "default" {
-  targets = ["gitops-aws"]
+  targets = ["reconciler-aws"]
 }
