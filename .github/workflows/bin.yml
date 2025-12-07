@@ -25,9 +25,9 @@ jobs:
     steps:
       - name: Validate targets
         run: |
-          missing=$(jq -r --argjson targets $BINARY_TARGETS '
+          missing=$(jq -r --argjson targets '${{ toJson(fromJson(vars.BINARY_TARGETS)) }}' '
             .[] | .targets[] | select(. as $t | $targets | has($t) | not)
-          ' <<< $BINARIES | sort -u)
+          ' <<< '${{ toJson(fromJson(vars.BINARIES)) }}' | sort -u)
           
           if [ -n "$missing" ]; then
             echo "Error: The following targets in binaries are not found in targets:" >&2
@@ -35,9 +35,6 @@ jobs:
             exit 1
           fi
         shell: bash
-        env:
-          BINARY_TARGETS: '${{ toJson(fromJson(vars.BINARY_TARGETS)) }}'
-          BINARIES: '${{ toJson(fromJson(vars.BINARIES)) }}'
       
       - name: Setup build matrix
         id: set-matrix
