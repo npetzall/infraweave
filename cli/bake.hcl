@@ -1,7 +1,6 @@
 variable "REGISTRY" {}
 variable "VERSION" {}
 
-# Runner using terraform
 target "cli" {
   context = "."
   dockerfile = "cli/Dockerfile"
@@ -9,7 +8,6 @@ target "cli" {
   platforms = ["linux/arm64"]
 }
 
-# Build both runners
 group "default" {
   targets = ["cli"]
 }
