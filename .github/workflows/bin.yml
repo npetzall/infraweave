@@ -58,6 +58,7 @@ jobs:
     name: Build (${{ matrix.name }})
     needs: setup
     strategy:
+      fail-fast: false
       matrix: ${{ fromJson(needs.setup.outputs.matrix) }}
     runs-on: ${{ matrix.runner }}
     steps:
