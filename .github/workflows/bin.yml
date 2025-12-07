@@ -36,8 +36,8 @@ jobs:
           fi
         shell: bash
         env:
-          BINARY_TARGETS: ${{ toJson(vars.BINARY_TARGETS) }}
-          BINARIES: ${{ toJson(vars.BINARIES) }}
+          BINARY_TARGETS: ${{ toJson(fromJson(vars.BINARY_TARGETS)) }}
+          BINARIES: ${{ toJson(fromJson(vars.BINARIES)) }}
       
       - name: Setup build matrix
         id: set-matrix
