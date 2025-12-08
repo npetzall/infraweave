@@ -91,7 +91,7 @@ jobs:
           echo "tests=$tests" >> $GITHUB_OUTPUT
 
   integration-test:
-    name: Integration Test (${{provider.provider}} - ${{ matrix.test }})
+    name: Integration Test ${{ matrix.provider.PROVIDER }} (${{ matrix.test }})
     needs: [build-tests, integration-tests-matrix]
     runs-on: ubuntu-latest
     strategy:
