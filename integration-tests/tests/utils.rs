@@ -30,6 +30,7 @@ fn get_image_name(original_image: &str, tag: &str) -> (String, String) {
         "mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator" => "azure-cosmos-emulator",
         "minio/minio" => "minio",
         "mcr.microsoft.com/azure-storage/azurite" => "azurite",
+        "amazon/dynamodb-local" => "dynamodb-local",
         _ => return (original_image.to_string(), tag.to_string()),
     };
     
