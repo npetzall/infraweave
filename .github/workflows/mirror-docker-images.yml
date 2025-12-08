@@ -23,6 +23,8 @@ jobs:
       fail-fast: false
       matrix:
         include: ${{ fromJson(vars.DOCKER_IMAGE_MIRROR) }}
+    env:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
     steps:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -30,7 +32,7 @@ jobs:
       - name: Log into Docker Hub
         # Note: Set DOCKERHUB_USERNAME and DOCKERHUB_TOKEN secrets to avoid rate limits.
         # Public images can be pulled without credentials, but authenticated pulls have higher rate limits.
-        if: ${{ secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != '' }}
+        if: ${{ env.DOCKERHUB_USERNAME != '' }}
         uses: docker/login-action@v3
         with:
           registry: ${{ env.DOCKER_REGISTRY }}
