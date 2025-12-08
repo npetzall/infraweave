@@ -1,4 +1,4 @@
-name: Build CLI (Reusable)
+name: Build Binaries (Reusable)
 
 on:
   workflow_call:
