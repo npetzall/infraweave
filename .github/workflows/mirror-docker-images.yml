@@ -26,9 +26,6 @@ jobs:
     env:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
     steps:
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
       - name: Log into Docker Hub
         # Note: Set DOCKERHUB_USERNAME and DOCKERHUB_TOKEN secrets to avoid rate limits.
         # Public images can be pulled without credentials, but authenticated pulls have higher rate limits.
