@@ -79,7 +79,7 @@ jobs:
     needs: [build-tests, integration-tests-matrix]
     runs-on: ubuntu-latest
     env:
-      DOCKER_IMAGE_MIRROR: ${{ env.DOCKER_IMAGE_MIRROR }}
+      DOCKER_IMAGE_MIRROR: ghcr.io/${{ github.repository }}
     strategy:
       fail-fast: false
       matrix:
