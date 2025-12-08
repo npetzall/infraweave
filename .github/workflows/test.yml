@@ -78,6 +78,8 @@ jobs:
     name: Integration Test ${{ matrix.provider.PROVIDER }} (${{ matrix.test }})
     needs: [build-tests, integration-tests-matrix]
     runs-on: ubuntu-latest
+    env:
+      DOCKER_IMAGE_MIRROR: ${{ env.DOCKER_IMAGE_MIRROR }}
     strategy:
       fail-fast: false
       matrix:
