@@ -859,18 +859,18 @@ async fn plan_or_apply_deployment(
 /// Extracts a Module from a Python-bound object, handling wrapped attributes.
 fn extract_module(obj: Bound<PyAny>) -> PyResult<Module> {
     if let Ok(module_attr) = obj.getattr("module") {
-        module_attr.extract()
+        module_attr.extract().map_err(Into::into)
     } else {
-        obj.extract()
+        obj.extract().map_err(Into::into)
     }
 }
 
 /// Extracts a Stack from a Python-bound object, handling wrapped attributes.
 fn extract_stack(obj: Bound<PyAny>) -> PyResult<Stack> {
     if let Ok(module_attr) = obj.getattr("module") {
-        module_attr.extract()
+        module_attr.extract().map_err(Into::into)
     } else {
-        obj.extract()
+        obj.extract().map_err(Into::into)
     }
 }
 
