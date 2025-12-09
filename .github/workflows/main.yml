@@ -23,3 +23,6 @@ jobs:
       version: ${{ inputs.version }}
     secrets: inherit
 
+  test:
+    uses: ./.github/workflows/test.yml
+    secrets: inherit
