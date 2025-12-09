@@ -643,7 +643,7 @@ impl Deployment {
     ///
     /// Returns `None` if no deployment has run yet.
     #[getter]
-    fn outputs(&self, py: Python) -> PyResult<PyObject> {
+    fn outputs(&self, py: Python) -> PyResult<Py<PyAny>> {
         match &self.last_deployment {
             Some(deployment) => match &deployment.output {
                 serde_json::Value::Object(map) => {
@@ -665,9 +665,9 @@ impl Deployment {
                     let ns = simple_ns.call((), Some(&kwargs))?;
                     Ok(ns.into())
                 }
-                _ => Ok(py.None().into()),
+                _ => Ok(py.None()),
             },
-            None => Ok(py.None().into()),
+            None => Ok(py.None()),
         }
     }
 
@@ -679,9 +679,9 @@ impl Deployment {
     /// Exit the context manager, automatically destroying or cleaning up.
     fn __exit__(
         mut slf: PyRefMut<Self>,
-        _exc_type: Option<PyObject>,
-        _exc_value: Option<PyObject>,
-        _traceback: Option<PyObject>,
+        _exc_type: Option<Py<PyAny>>,
+        _exc_value: Option<Py<PyAny>>,
+        _traceback: Option<Py<PyAny>>,
     ) -> PyResult<bool> {
         // If a deployment was run or an error occurred, destroy it
         if slf.last_deployment.is_some() || slf.has_error {
