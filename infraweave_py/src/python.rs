@@ -17,7 +17,7 @@ fn create_dynamic_wrapper(
     py: Python<'_>,
     class_name: &str,
     wrapped_class: &str,
-) -> PyResult<PyObject> {
+) -> PyResult<Py<PyAny>> {
     let class_dict = PyDict::new(py);
 
     let globals = {
