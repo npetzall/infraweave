@@ -42,6 +42,7 @@ jobs:
         uses: actions/download-artifact@v6
         with:
           path: binaries
+          pattern: binaries-*
           merge-multiple: true
 
       - name: Set up QEMU

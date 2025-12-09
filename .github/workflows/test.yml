@@ -14,11 +14,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Free up disk space
-        uses: ./.github/actions/free-disk-space
-        with:
-          level: "maximum"
-
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@fcf085fcb4b4b8f63f96906cd713eb52181b5ea4
         with:
@@ -39,11 +34,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Free up disk space
-        uses: ./.github/actions/free-disk-space
-        with:
-          level: "maximum"
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@fcf085fcb4b4b8f63f96906cd713eb52181b5ea4
@@ -105,11 +95,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Free up disk space
-        uses: ./.github/actions/free-disk-space
-        with:
-          level: "maximum"
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@fcf085fcb4b4b8f63f96906cd713eb52181b5ea4
