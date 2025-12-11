@@ -93,7 +93,7 @@ jobs:
         if: ${{ matrix.cross == true }}
         env:
           CARGO: cross
-        run: maturin build --release --target ${{ matrix.rust_target }} --manifest-path infraweave_py/Cargo.toml --out dist
+        run: maturin build --release --target ${{ matrix.rust_target }} --manifest-path /project/infraweave_py/Cargo.toml --out dist
 
       - name: Build with cargo
         if: ${{ matrix.cross == false }}
