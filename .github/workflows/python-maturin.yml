@@ -93,13 +93,13 @@ jobs:
         if: ${{ matrix.cross == true }}
         env:
           CARGO: cross
-          CARGO_TERM_VERBOSE: 1
+          CARGO_TERM_VERBOSE: true
         run: maturin build --release --target ${{ matrix.rust_target }} --manifest-path /project/infraweave_py/Cargo.toml --out dist
 
       - name: Build with cargo
         if: ${{ matrix.cross == false }}
         env:
-          CARGO_TERM_VERBOSE: 1
+          CARGO_TERM_VERBOSE: true
         run: maturin build --release --target ${{ matrix.rust_target }} --manifest-path infraweave_py/Cargo.toml --out dist
 
       - name: Upload artifact
