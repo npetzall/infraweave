@@ -94,13 +94,15 @@ jobs:
         env:
           CARGO: cross
           CARGO_TERM_VERBOSE: true
-        run: maturin build --release --target ${{ matrix.rust_target }} --manifest-path ./infraweave_py/Cargo.toml --out dist
+        working-directory: infraweave_py
+        run: maturin build --release --target ${{ matrix.rust_target }}  --out dist
 
       - name: Build with cargo
         if: ${{ matrix.cross == false }}
         env:
           CARGO_TERM_VERBOSE: true
-        run: maturin build --release --target ${{ matrix.rust_target }} --manifest-path infraweave_py/Cargo.toml --out dist
+        working-directory: infraweave_py
+        run: maturin build --release --target ${{ matrix.rust_target }}  --out dist
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
