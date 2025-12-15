@@ -98,26 +98,29 @@ jobs:
       
       - name: Build wheels (linux)
         if: matrix.runner == 'ubuntu-latest'
-        uses: PyO3/maturin-action@v1
+        uses: npetzall/maturin-action@4de54bfad8c7b12dcade33244e619333f393f8ed
         with:
           target: ${{ matrix.rust_target }}
           args: --release --out dist --find-interpreter --manifest-path infraweave_py/Cargo.toml
           manylinux: ${{ endsWith(matrix.rust_target, 'musl') && 'musllinux_1_2' || '2_28' }}
           before-script-linux: which yum &> /dev/null && yum install -y perl-core
+          clean-before-run: false
       
       - name: Build wheels (windows)
         if: matrix.runner == 'windows-latest'
-        uses: PyO3/maturin-action@v1
+        uses: npetzall/maturin-action@4de54bfad8c7b12dcade33244e619333f393f8ed
         with:
           target: ${{ matrix.rust_target }}
           args: --release --out dist --find-interpreter --manifest-path infraweave_py/Cargo.toml
+          clean-before-run: false
       
       - name: Build wheels (macos)
         if: matrix.runner == 'macos-latest'
-        uses: PyO3/maturin-action@v1
+        uses: npetzall/maturin-action@4de54bfad8c7b12dcade33244e619333f393f8ed
         with:
           target: ${{ matrix.rust_target }}
           args: --release --out dist --find-interpreter --manifest-path infraweave_py/Cargo.toml
+          clean-before-run: false
 
       - name: Upload wheels
         uses: actions/upload-artifact@v4
