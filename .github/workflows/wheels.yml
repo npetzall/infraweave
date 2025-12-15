@@ -103,6 +103,7 @@ jobs:
           target: ${{ matrix.rust_target }}
           args: --release --out dist --find-interpreter --manifest-path infraweave_py/Cargo.toml
           manylinux: ${{ endsWith(matrix.rust_target, 'musl') && 'musllinux_1_2' || '2_28' }}
+          before-script-linux: yum install -y perl-core
       
       - name: Build wheels (windows)
         if: matrix.runner == 'windows-latest'
