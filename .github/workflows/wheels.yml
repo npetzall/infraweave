@@ -102,7 +102,7 @@ jobs:
         with:
           target: ${{ matrix.rust_target }}
           args: --release --out dist --find-interpreter --manifest-path infraweave_py/Cargo.toml
-          manylinux: ${{ endsWith(matrix.rust_target, 'musl') ? 'musllinux_1_2' : 'auto' }}
+          manylinux: ${{ endsWith(matrix.rust_target, 'musl') && 'musllinux_1_2' || 'auto' }}
       
       - name: Build wheels (windows)
         if: matrix.runner == 'windows-latest'
