@@ -52,7 +52,7 @@ jobs:
           ' --argjson targets '${{ vars.TARGETS }}' --argjson python_wheels '${{ vars.PYTHON_WHEELS }}')
           
           echo "matrix=$matrix" >> $GITHUB_OUTPUT
-        shell: 
+        shell: bash
   
   sdist:
     runs-on: ubuntu-latest
