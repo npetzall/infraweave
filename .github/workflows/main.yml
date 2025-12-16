@@ -28,7 +28,6 @@ jobs:
     secrets: inherit
 
   python-wheels:
-    needs: build
     uses: ./.github/workflows/wheels.yml
     with:
       version: ${{ inputs.version }}
