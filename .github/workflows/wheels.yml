@@ -98,29 +98,32 @@ jobs:
       
       - name: Build wheels (linux)
         if: matrix.runner == 'ubuntu-latest'
-        uses: npetzall/maturin-action@4de54bfad8c7b12dcade33244e619333f393f8ed
+        uses: npetzall/maturin-action@851dd864b558cc2e326a5f40ccd7da5dbce697b7
         with:
           target: ${{ matrix.rust_target }}
           args: --release --out dist --find-interpreter --manifest-path infraweave_py/Cargo.toml
           manylinux: ${{ endsWith(matrix.rust_target, 'musl') && 'musllinux_1_2' || '2_28' }}
           before-script-linux: which yum &> /dev/null && yum install -y perl-core
           clean-before-run: false
+          rust-home: /home/runner
       
       - name: Build wheels (windows)
         if: matrix.runner == 'windows-latest'
-        uses: npetzall/maturin-action@4de54bfad8c7b12dcade33244e619333f393f8ed
+        uses: npetzall/maturin-action@851dd864b558cc2e326a5f40ccd7da5dbce697b7
         with:
           target: ${{ matrix.rust_target }}
           args: --release --out dist --find-interpreter --manifest-path infraweave_py/Cargo.toml
           clean-before-run: false
+          rust-home: /home/runner
       
       - name: Build wheels (macos)
         if: matrix.runner == 'macos-latest'
-        uses: npetzall/maturin-action@4de54bfad8c7b12dcade33244e619333f393f8ed
+        uses: npetzall/maturin-action@851dd864b558cc2e326a5f40ccd7da5dbce697b7
         with:
           target: ${{ matrix.rust_target }}
           args: --release --out dist --find-interpreter --manifest-path infraweave_py/Cargo.toml
           clean-before-run: false
+          rust-home: /home/runner
 
       - name: Upload wheels
         uses: actions/upload-artifact@v4
