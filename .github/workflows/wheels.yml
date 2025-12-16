@@ -98,7 +98,7 @@ jobs:
       
       - name: Build wheels (linux)
         if: matrix.runner == 'ubuntu-latest'
-        uses: npetzall/maturin-action@851dd864b558cc2e326a5f40ccd7da5dbce697b7
+        uses: npetzall/maturin-action@7236a67c1d91e617a8425734621b494e16e8c556
         with:
           target: ${{ matrix.rust_target }}
           args: --release --out dist --find-interpreter --manifest-path infraweave_py/Cargo.toml
@@ -109,7 +109,7 @@ jobs:
       
       - name: Build wheels (windows)
         if: matrix.runner == 'windows-latest'
-        uses: npetzall/maturin-action@851dd864b558cc2e326a5f40ccd7da5dbce697b7
+        uses: npetzall/maturin-action@7236a67c1d91e617a8425734621b494e16e8c556
         with:
           target: ${{ matrix.rust_target }}
           args: --release --out dist --find-interpreter --manifest-path infraweave_py/Cargo.toml
@@ -118,7 +118,7 @@ jobs:
       
       - name: Build wheels (macos)
         if: matrix.runner == 'macos-latest'
-        uses: npetzall/maturin-action@851dd864b558cc2e326a5f40ccd7da5dbce697b7
+        uses: npetzall/maturin-action@7236a67c1d91e617a8425734621b494e16e8c556
         with:
           target: ${{ matrix.rust_target }}
           args: --release --out dist --find-interpreter --manifest-path infraweave_py/Cargo.toml
