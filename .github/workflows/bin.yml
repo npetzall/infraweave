@@ -16,6 +16,7 @@ on:
         default: 0.0.0-manual
 env:
   VERSION: ${{ inputs.version }}
+  CARGO_TERM_VERBOSE: true
 
 jobs:
   setup:
@@ -84,11 +85,11 @@ jobs:
 
       - name: Build with cross
         if: ${{ matrix.cross == true }}
-        run: cross build --release --verbose --locked --target ${{ matrix.rust_target }} --bin ${{ join(matrix.bins, ' --bin ') }}
+        run: cross build --release --locked --target ${{ matrix.rust_target }} --bin ${{ join(matrix.bins, ' --bin ') }}
 
       - name: Build with cargo
         if: ${{ matrix.cross == false }}
-        run: cargo build --release --verbose --locked --target ${{ matrix.rust_target }} --bin ${{ join(matrix.bins, ' --bin ') }}
+        run: cargo build --release --locked --target ${{ matrix.rust_target }} --bin ${{ join(matrix.bins, ' --bin ') }}
 
       - name: Prepare artifact (Windows)
         if: runner.os == 'Windows'
