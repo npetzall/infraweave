@@ -17,6 +17,7 @@ on:
 env:
   VERSION: ${{ inputs.version }}
   CARGO_TERM_VERBOSE: true
+  K8S_OPENAPI_ENABLED_VERSION: v1.31
 
 jobs:
   setup:

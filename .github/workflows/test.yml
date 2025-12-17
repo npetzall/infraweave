@@ -9,6 +9,7 @@ permissions:
 
 env:
   CARGO_TERM_VERBOSE: true
+  K8S_OPENAPI_ENABLED_VERSION: v1.31
 
 jobs:
   build-tests:

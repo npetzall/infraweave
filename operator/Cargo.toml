@@ -5,7 +5,7 @@ edition = "2021"
 license-file = "../LICENSE"
 
 [package.metadata.cross.build.env]
-passthrough = ["K8S_OPENAPI_ENABLED_VERSION=v1.31"]
+passthrough = ["K8S_OPENAPI_ENABLED_VERSION"]
 
 [lints]
 workspace = true
