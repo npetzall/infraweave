@@ -1,0 +1,160 @@
+name: Calculate Version (Reusable)
+
+on:
+  workflow_call:
+    inputs:
+      release:
+        description: "Whether this is a release build"
+        required: false
+        type: boolean
+        default: false
+    outputs:
+      version:
+        description: "Calculated semantic version (e.g., 1.2.3)"
+        value: ${{ jobs.calculate.outputs.version }}
+      commit_count:
+        description: "Total number of commits since last tag"
+        value: ${{ jobs.calculate.outputs.commit_count }}
+  workflow_dispatch:
+    inputs:
+      release:
+        description: "Whether this is a release build"
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  calculate:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      commit_count: ${{ steps.version.outputs.commit_count }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history to find tags
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+
+      - name: Get last tag
+        id: last-tag
+        run: |
+          # Get the latest tag, or use v0.0.0 if no tags exist
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          echo "last_tag=$LAST_TAG" >> $GITHUB_OUTPUT
+          echo "Last tag: $LAST_TAG"
+
+      - name: Calculate version and count commits
+        id: version
+        run: |
+          LAST_TAG="${{ steps.last-tag.outputs.last_tag }}"
+          
+          # Get all commit messages since last tag (subject and body)
+          if [ "$LAST_TAG" = "v0.0.0" ]; then
+            # If no tags exist, get all commits
+            COMMITS=$(git log --pretty=format:"%s%n%b" --no-merges)
+          else
+            # Get commits since last tag
+            COMMITS=$(git log ${LAST_TAG}..HEAD --pretty=format:"%s%n%b" --no-merges)
+          fi
+          
+          # Count commits (handle empty case)
+          # Use git rev-list for accurate commit counting
+          if [ "$LAST_TAG" = "v0.0.0" ]; then
+            # If no tags exist, count all commits
+            COMMIT_COUNT=$(git rev-list --count HEAD --no-merges 2>/dev/null || echo "0")
+          else
+            # Count commits since last tag
+            COMMIT_COUNT=$(git rev-list --count ${LAST_TAG}..HEAD --no-merges 2>/dev/null || echo "0")
+          fi
+          
+          echo "commit_count=$COMMIT_COUNT" >> $GITHUB_OUTPUT
+          echo "Commit count: $COMMIT_COUNT"
+          
+          # Extract version from last tag (remove 'v' prefix if present)
+          if [[ "$LAST_TAG" =~ ^v?([0-9]+)\.([0-9]+)\.([0-9]+) ]]; then
+            MAJOR="${BASH_REMATCH[1]}"
+            MINOR="${BASH_REMATCH[2]}"
+            PATCH="${BASH_REMATCH[3]}"
+          else
+            # Default to 0.0.0 if tag format is unexpected
+            MAJOR=0
+            MINOR=0
+            PATCH=0
+          fi
+          
+          # If no commits, return the same version
+          if [ "$COMMIT_COUNT" -eq 0 ]; then
+            NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}"
+            echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+            echo "No commits since last tag, version unchanged: $NEW_VERSION"
+            exit 0
+          fi
+          
+          # Check for breaking changes
+          # Conventional commits: "BREAKING CHANGE:" or "!" in type/scope (e.g., "feat!: ..." or "feat(scope)!: ...")
+          # Match patterns like: "feat!:", "feat(scope)!:", or "BREAKING CHANGE:" anywhere in the message
+          HAS_BREAKING=$(echo "$COMMITS" | grep -iE "(^[a-z]+(\([^)]+\))?!:|BREAKING CHANGE:)" | wc -l | tr -d ' ')
+          
+          # Check for features
+          HAS_FEAT=$(echo "$COMMITS" | grep -iE "^feat" | wc -l | tr -d ' ')
+          
+          # Calculate new version based on rules
+          if [ "$HAS_BREAKING" -gt 0 ]; then
+            # Breaking change: increment major, reset minor and patch
+            NEW_MAJOR=$((MAJOR + 1))
+            NEW_MINOR=0
+            NEW_PATCH=0
+            echo "Breaking change detected, incrementing major version"
+          elif [ "$HAS_FEAT" -gt 0 ]; then
+            # Feature: increment minor, reset patch
+            NEW_MAJOR=$MAJOR
+            NEW_MINOR=$((MINOR + 1))
+            NEW_PATCH=0
+            echo "Feature detected, incrementing minor version"
+          else
+            # Patch: increment patch
+            NEW_MAJOR=$MAJOR
+            NEW_MINOR=$MINOR
+            NEW_PATCH=$((PATCH + 1))
+            echo "Patch increment"
+          fi
+          
+          BASE_VERSION="${NEW_MAJOR}.${NEW_MINOR}.${NEW_PATCH}"
+          
+          # Determine the scenario and apply appropriate suffix
+          EVENT_TYPE="${{ github.event_name }}"
+          RELEASE_INPUT="${{ inputs.release }}"
+          # Use PR head SHA for PRs, otherwise use the current SHA
+          if [ "$EVENT_TYPE" = "pull_request" ]; then
+            SHORT_SHA=$(echo "${{ github.event.pull_request.head.sha }}" | cut -c1-7)
+          else
+            SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+          fi
+          CURRENT_BRANCH="${{ github.ref_name }}"
+          DEFAULT_BRANCH="${{ github.event.repository.default_branch }}"
+          
+          # Scenario 1: Pull Request (check first, as PRs are typically on non-default branches)
+          if [ "$EVENT_TYPE" = "pull_request" ]; then
+            PR_NUMBER="${{ github.event.pull_request.number }}"
+            NEW_VERSION="${BASE_VERSION}-pr${PR_NUMBER}+${SHORT_SHA}"
+            echo "Pull request build detected, adding PR suffix"
+          
+          # Scenario 2: Non-default branch (ignore release input)
+          elif [ "$CURRENT_BRANCH" != "$DEFAULT_BRANCH" ]; then
+            NEW_VERSION="${BASE_VERSION}-br+${SHORT_SHA}"
+            echo "Non-default branch build detected ($CURRENT_BRANCH), adding branch suffix"
+          
+          # Scenario 3: Release (release=true and on default branch)
+          elif [ "$RELEASE_INPUT" = "true" ]; then
+            NEW_VERSION="$BASE_VERSION"
+            echo "Release build detected on default branch ($DEFAULT_BRANCH), using base version"
+          
+          # Scenario 4: Main build (all other cases: push to default branch, workflow_call/dispatch with release=false)
+          else
+            NEW_VERSION="${BASE_VERSION}-rc${COMMIT_COUNT}+${SHORT_SHA}"
+            echo "Main build detected, adding RC suffix"
+          fi
+          
+          echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "Final version: $NEW_VERSION (from $LAST_TAG)"

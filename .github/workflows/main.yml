@@ -3,24 +3,35 @@ name: Main workflow
 on:
   workflow_dispatch:
     inputs:
-      version:
+      release:
+        description: "Whether this is a release build"
         required: false
-        type: string
-        description: Version of the CLI to build (e.g., 0.1.0)
-        default: 0.0.0-manual
+        type: boolean
+        default: false
+  pull_request:
+  push:
+    branches:
+      - main
 
 jobs:
+  calculate-version:
+    uses: ./.github/workflows/calculate-version.yml
+    with:
+      release: ${{ inputs.release || false }}
+    secrets: inherit
+
   build:
+    needs: calculate-version
     uses: ./.github/workflows/bin.yml
     with:
-      version: ${{ inputs.version }}
+      version: ${{ needs.calculate-version.outputs.version }}
     secrets: inherit
 
   docker:
-    needs: build
+    needs: [build, calculate-version]
     uses: ./.github/workflows/docker.yml
     with:
-      version: ${{ inputs.version }}
+      version: ${{ needs.calculate-version.outputs.version }}
     secrets: inherit
 
   test:
@@ -28,7 +39,8 @@ jobs:
     secrets: inherit
 
   python-wheels:
+    needs: calculate-version
     uses: ./.github/workflows/wheels.yml
     with:
-      version: ${{ inputs.version }}
+      version: ${{ needs.calculate-version.outputs.version }}
     secrets: inherit
