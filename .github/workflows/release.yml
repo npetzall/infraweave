@@ -1,0 +1,303 @@
+name: Release (Reusable)
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        required: true
+        type: string
+        description: Version to release (e.g., 1.2.3)
+      dry_run:
+        required: false
+        type: boolean
+        default: false
+        description: Whether this is a dry run
+  workflow_dispatch:
+    inputs:
+      version:
+        required: false
+        type: string
+        description: Version to release (e.g., 1.2.3)
+        default: 0.0.0-manual
+      dry_run:
+        required: false
+        type: boolean
+        default: true
+        description: Whether this is a dry run
+      run_id:
+        required: false
+        type: string
+        description: Workflow run ID to download artifacts from (defaults to current run)
+
+env:
+  VERSION: ${{ inputs.version }}
+  DRY_RUN: ${{ inputs.dry_run || false }}
+  GHCR_REGISTRY: ghcr.io
+  GHCR_REPO: ${{ github.repository }}
+
+jobs:
+  generate-release-notes:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      notes: ${{ steps.notes.outputs.notes }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get last tag
+        id: last-tag
+        run: |
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          echo "last_tag=$LAST_TAG" >> $GITHUB_OUTPUT
+          echo "Last tag: $LAST_TAG"
+
+      - name: Generate release notes from conventional commits
+        id: notes
+        run: |
+          LAST_TAG="${{ steps.last-tag.outputs.last_tag }}"
+          
+          if [ "$LAST_TAG" = "v0.0.0" ]; then
+            COMMITS=$(git log --pretty=format:"%s%n%b" --no-merges)
+          else
+            COMMITS=$(git log ${LAST_TAG}..HEAD --pretty=format:"%s%n%b" --no-merges)
+          fi
+          
+          if [ -z "$COMMITS" ]; then
+            NOTES="# Release ${{ env.VERSION }}\n\nNo changes since last release."
+            echo "notes<<EOF" >> $GITHUB_OUTPUT
+            echo -e "$NOTES" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
+          # Parse conventional commits and categorize
+          BREAKING=""
+          FEATURES=""
+          FIXES=""
+          CHORES=""
+          DOCS=""
+          OTHER=""
+          
+          while IFS= read -r line; do
+            if [ -z "$line" ]; then
+              continue
+            fi
+            
+            # Check for breaking changes
+            if echo "$line" | grep -qiE "(^[a-z]+(\([^)]+\))?!:|BREAKING CHANGE:)"; then
+              BREAKING="${BREAKING}- ${line}\n"
+            # Check for features
+            elif echo "$line" | grep -qiE "^feat"; then
+              FEATURES="${FEATURES}- ${line}\n"
+            # Check for fixes
+            elif echo "$line" | grep -qiE "^fix"; then
+              FIXES="${FIXES}- ${line}\n"
+            # Check for docs
+            elif echo "$line" | grep -qiE "^docs?"; then
+              DOCS="${DOCS}- ${line}\n"
+            # Check for chores
+            elif echo "$line" | grep -qiE "^(chore|refactor|style|test|ci|build)"; then
+              CHORES="${CHORES}- ${line}\n"
+            else
+              OTHER="${OTHER}- ${line}\n"
+            fi
+          done <<< "$COMMITS"
+          
+          # Build release notes
+          NOTES="# Release ${{ env.VERSION }}\n\n"
+          
+          if [ -n "$BREAKING" ]; then
+            NOTES="${NOTES}## 🚨 Breaking Changes\n\n${BREAKING}\n"
+          fi
+          
+          if [ -n "$FEATURES" ]; then
+            NOTES="${NOTES}## ✨ New Features\n\n${FEATURES}\n"
+          fi
+          
+          if [ -n "$FIXES" ]; then
+            NOTES="${NOTES}## 🐛 Bug Fixes\n\n${FIXES}\n"
+          fi
+          
+          if [ -n "$DOCS" ]; then
+            NOTES="${NOTES}## 📝 Documentation\n\n${DOCS}\n"
+          fi
+          
+          if [ -n "$CHORES" ]; then
+            NOTES="${NOTES}## ⚙️ Maintenance & Refactoring\n\n${CHORES}\n"
+          fi
+          
+          if [ -n "$OTHER" ]; then
+            NOTES="${NOTES}## 🔀 Other Changes\n\n${OTHER}\n"
+          fi
+          
+          echo "notes<<EOF" >> $GITHUB_OUTPUT
+          echo -e "$NOTES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+  publish-images:
+    needs: [generate-release-notes]
+    runs-on: ubuntu-latest
+    permissions:
+      packages: read
+      id-token: write
+    if: ${{ vars.RELEASE_REGISTRIES != '' && vars.RELEASE_REGISTRIES != '[]' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        registry: ${{ fromJson(vars.RELEASE_REGISTRIES || '[]') }}
+    steps:
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log into GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.GHCR_REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Log into target registry (${{ matrix.registry.name }})
+        if: ${{ matrix.registry.auth_type == 'login' }}
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ matrix.registry.registry }}
+          username: ${{ secrets[matrix.registry.user_secret] }}
+          password: ${{ secrets[matrix.registry.password_secret] }}
+
+      - name: Configure AWS credentials for ${{ matrix.registry.name }} using OIDC
+        if: ${{ matrix.registry.auth_type == 'aws' }}
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets[matrix.registry.account_secret] }}:role/${{ secrets[matrix.registry.role_secret] }}
+          aws-region: ${{ secrets[matrix.registry.aws_region_secret] }}
+
+      - name: Log into ${{ matrix.registry.name }}
+        if: ${{ matrix.registry.auth_type == 'aws' }}
+        run: |
+          aws ecr-public get-login-password --region ${{ secrets[matrix.registry.aws_region_secret] }} | docker login --username AWS --password-stdin ${{ matrix.registry.registry }}
+
+      - name: Logged into (${{ matrix.registry.name }})
+        run: |
+          echo "Target registry: ${{ matrix.registry.registry }}"
+          echo "Target repository: ${{ matrix.registry.repository }}"
+
+      - name: Copy multi-platform images from GHCR to target registry
+        run: |
+          DOCKER_IMAGES='${{ vars.DOCKER_IMAGES }}'
+          if [ -z "$DOCKER_IMAGES" ] || [ "$DOCKER_IMAGES" = "null" ]; then
+            echo "No Docker images configured"
+            exit 0
+          fi
+          
+          DRY_RUN="${{ inputs.dry_run }}"
+          echo "$DOCKER_IMAGES" | jq -r '.[] | .bin' | while read -r IMAGE_NAME; do
+            SOURCE_IMAGE="${{ env.GHCR_REGISTRY }}/${{ env.GHCR_REPO }}/${IMAGE_NAME}:${{ env.VERSION }}"
+            TARGET_IMAGE="${{ matrix.registry.registry }}/${{ matrix.registry.repository }}/${IMAGE_NAME}:${{ env.VERSION }}"
+            
+            if [ "$DRY_RUN" = "true" ]; then
+              echo "::notice::DRY RUN: Would copy ${SOURCE_IMAGE} to ${TARGET_IMAGE}"
+              echo "Would copy ${SOURCE_IMAGE} to ${TARGET_IMAGE}"
+            else
+              echo "Copying ${SOURCE_IMAGE} to ${TARGET_IMAGE}"
+              docker buildx imagetools create --tag "${TARGET_IMAGE}" "${SOURCE_IMAGE}"
+            fi
+          done
+
+  publish-wheels:
+    needs: [generate-release-notes]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Download all wheels
+        uses: actions/download-artifact@v4
+        with:
+          path: ./release-wheels
+          pattern: wheels-*
+          merge-multiple: true
+          run-id: ${{ inputs.run_id || github.run_id }}
+
+      - name: Collect wheels
+        run: |
+          mkdir -p dist_collected
+          find ./release-wheels -name '*.whl' -exec cp {} dist_collected/ \;
+          find ./release-wheels -name '*.tar.gz' -exec cp {} dist_collected/ \;
+          echo "Collected wheels:"
+          ls -la dist_collected/
+
+      - name: Publish wheels to PyPI
+        if: ${{ !inputs.dry_run }}
+        uses: pypa/gh-action-pypi-publish@76f52bc884231f62b9a034ebfe128415bbaabdfc
+        with:
+          packages-dir: dist_collected/
+
+      - name: Dry run - Show what would be published
+        if: ${{ inputs.dry_run }}
+        run: |
+          echo "::notice::DRY RUN: Would publish the following packages to PyPI:"
+          ls -la dist_collected/
+
+  create-release:
+    needs: [generate-release-notes, publish-wheels, publish-images]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download all binaries
+        uses: actions/download-artifact@v4
+        with:
+          path: ./release-binaries
+          pattern: binaries-*
+          merge-multiple: true
+          run-id: ${{ inputs.run_id || github.run_id }}
+
+      - name: Download all wheels
+        uses: actions/download-artifact@v4
+        with:
+          path: ./release-wheels
+          pattern: wheels-*
+          merge-multiple: true
+          run-id: ${{ inputs.run_id || github.run_id }}
+
+      - name: Create GitHub Release
+        if: ${{ !inputs.dry_run }}
+        run: |
+          FILES=$(find ./release-binaries ./release-wheels -type f 2>/dev/null | tr '\n' ' ' || true)
+          if [ -z "$FILES" ]; then
+            echo "No files to attach to release"
+            gh release create "v${{ env.VERSION }}" \
+              --title "Release v${{ env.VERSION }}" \
+              --notes "${{ needs.generate-release-notes.outputs.notes }}"
+          else
+            gh release create "v${{ env.VERSION }}" \
+              --title "Release v${{ env.VERSION }}" \
+              --notes "${{ needs.generate-release-notes.outputs.notes }}" \
+              $FILES
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Dry run - Show what would be released
+        if: ${{ inputs.dry_run }}
+        run: |
+          echo "::notice::DRY RUN: Would create GitHub release with:"
+          echo "  Tag: v${{ env.VERSION }}"
+          echo "  Name: Release v${{ env.VERSION }}"
+          echo "  Files:"
+          find ./release-binaries -type f | while read file; do
+            echo "    - $file"
+          done
+          find ./release-wheels -type f | while read file; do
+            echo "    - $file"
+          done
+          echo ""
+          echo "Release notes:"
+          echo "${{ needs.generate-release-notes.outputs.notes }}"
