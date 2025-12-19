@@ -302,3 +302,8 @@ jobs:
           echo ""
           echo "Release notes:"
           echo "${{ needs.generate-release-notes.outputs.notes }}"
+          
+          # Write release notes to job summary
+          echo "## Release Notes (Dry Run)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "${{ needs.generate-release-notes.outputs.notes }}" >> $GITHUB_STEP_SUMMARY
