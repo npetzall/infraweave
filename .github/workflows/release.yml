@@ -244,6 +244,7 @@ jobs:
 
   create-release:
     needs: [generate-release-notes, publish-wheels, publish-images]
+    if: !cancelled() && !failure()
     runs-on: ubuntu-latest
     permissions:
       contents: write
