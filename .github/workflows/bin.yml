@@ -68,17 +68,18 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set version in Cargo.toml
-        shell: bash
-        run: |
-          sed -i.bak "s/^version = \".*\"/version = \"$VERSION\"/" Cargo.toml
-          rm -f Cargo.toml.bak
-
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@fcf085fcb4b4b8f63f96906cd713eb52181b5ea4
         with:
           toolchain: stable
           targets: ${{ matrix.rust_target }}
+
+      - name: Set version in Cargo.toml
+        shell: bash
+        run: |
+          sed -i.bak "s/^version = \".*\"/version = \"$VERSION\"/" Cargo.toml
+          rm -f Cargo.toml.bak
+          cargo metadata > /dev/null 2>&1
         
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@9d47c6ad4b02e050fd481d890b2ea34778fd09d6
