@@ -58,6 +58,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Set version in Cargo.toml
+        run: sed -i "s/^version = \".*\"/version = \"$VERSION\"/" Cargo.toml
       - name: Build sdist
         uses: PyO3/maturin-action@777bae81f5815a42f801f333e24216de636a5001
         with:
@@ -79,6 +81,9 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+      
+      - name: Set version in Cargo.toml
+        run: sed -i "s/^version = \".*\"/version = \"$VERSION\"/" Cargo.toml
       
       - name: Build wheels (linux)
         if: matrix.runner == 'ubuntu-latest'

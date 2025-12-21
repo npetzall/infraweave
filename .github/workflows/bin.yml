@@ -68,6 +68,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Set version in Cargo.toml
+        run: sed -i "s/^version = \".*\"/version = \"$VERSION\"/" Cargo.toml
+
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@fcf085fcb4b4b8f63f96906cd713eb52181b5ea4
         with:
