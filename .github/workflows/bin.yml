@@ -60,6 +60,9 @@ jobs:
           ' --argjson targets "$TARGETS" --argjson binaries "$BINARIES")
           
           echo "matrix=$matrix" >> $GITHUB_OUTPUT
+          
+          echo "Build matrix:"
+          echo "$matrix" | jq '.'
         shell: bash
 
       

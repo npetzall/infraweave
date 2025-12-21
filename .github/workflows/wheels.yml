@@ -30,9 +30,9 @@ jobs:
           TARGETS: ${{ vars.TARGETS }}
           PYTHON_WHEELS: ${{ vars.PYTHON_WHEELS }}
         run: |
-          missing=$(jq -r --argjson targets '$TARGETS' '
+          missing=$(jq -r --argjson targets "$TARGETS" '
             .[] | select(. as $t | $targets | has($t) | not)
-          ' <<< '$PYTHON_WHEELS' | sort -u)
+          ' <<< "$PYTHON_WHEELS" | sort -u)
           
           if [ -n "$missing" ]; then
             missing_list=$(echo "$missing" | tr '\n' ',' | sed 's/,$//')
@@ -49,15 +49,18 @@ jobs:
         run: |
           matrix=$(echo 'null' | jq -c '
             {
-              include: ([$python_wheels[] | . as $target_name | $targets[$target_name] | {
+              include: ([$python_wheels[] | . as $target_name | $targets[$target_name] | select(. != null) | {
                 name: $target_name,
                 rust_target: .rust_target,
                 runner: .runner,
               }])
             }
-          ' --argjson targets '$TARGETS' --argjson python_wheels '$PYTHON_WHEELS')
+          ' --argjson targets "$TARGETS" --argjson python_wheels "$PYTHON_WHEELS")
           
           echo "matrix=$matrix" >> $GITHUB_OUTPUT
+
+          echo "Build matrix:"
+          echo "$matrix" | jq '.'
         shell: bash
   
   sdist:
