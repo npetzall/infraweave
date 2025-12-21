@@ -22,6 +22,7 @@ permissions:
 env:
   GHCR_REGISTRY: ghcr.io
   GHCR_REPO: ${{ github.repository }}
+  DOCKER_BUILD_SUMMARY: false
 
 jobs:
   build:
