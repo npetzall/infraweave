@@ -67,6 +67,9 @@ jobs:
           cd integration-tests/tests
           tests=$(ls -1 *.rs 2>/dev/null | sed 's/\.rs$//' | awk 'BEGIN{printf "["} {if(NR>1)printf ","; printf "\"%s\"", $0} END{printf "]"}')
           echo "tests=$tests" >> $GITHUB_OUTPUT
+          
+          echo "Integration tests matrix:"
+          echo "$tests" | jq '.'
 
   integration-test:
     name: Integration Test ${{ matrix.provider.PROVIDER }} (${{ matrix.test }})
