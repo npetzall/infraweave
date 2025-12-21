@@ -26,10 +26,13 @@ jobs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
       - name: Validate targets
+        env:
+          TARGETS: ${{ vars.TARGETS }}
+          PYTHON_WHEELS: ${{ vars.PYTHON_WHEELS }}
         run: |
-          missing=$(jq -r --argjson targets '${{ vars.TARGETS }}' '
+          missing=$(jq -r --argjson targets '$TARGETS' '
             .[] | select(. as $t | $targets | has($t) | not)
-          ' <<< '${{ vars.PYTHON_WHEELS }}' | sort -u)
+          ' <<< '$PYTHON_WHEELS' | sort -u)
           
           if [ -n "$missing" ]; then
             missing_list=$(echo "$missing" | tr '\n' ',' | sed 's/,$//')
@@ -40,6 +43,9 @@ jobs:
       
       - name: Setup build matrix
         id: set-matrix
+        env:
+          TARGETS: ${{ vars.TARGETS }}
+          PYTHON_WHEELS: ${{ vars.PYTHON_WHEELS }}
         run: |
           matrix=$(echo 'null' | jq -c '
             {
@@ -49,7 +55,7 @@ jobs:
                 runner: .runner,
               }])
             }
-          ' --argjson targets '${{ vars.TARGETS }}' --argjson python_wheels '${{ vars.PYTHON_WHEELS }}')
+          ' --argjson targets '$TARGETS' --argjson python_wheels '$PYTHON_WHEELS')
           
           echo "matrix=$matrix" >> $GITHUB_OUTPUT
         shell: bash

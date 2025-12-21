@@ -26,10 +26,13 @@ jobs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
       - name: Validate targets
+        env:
+          TARGETS: ${{ vars.TARGETS }}
+          BINARIES: ${{ vars.BINARIES }}
         run: |
-          missing=$(jq -r --argjson targets '${{ vars.TARGETS }}' '
+          missing=$(jq -r --argjson targets "$TARGETS" '
             .[] | .targets[] | select(. as $t | $targets | has($t) | not)
-          ' <<< '${{ vars.BINARIES }}' | sort -u)
+          ' <<< "$BINARIES" | sort -u)
           
           if [ -n "$missing" ]; then
             missing_list=$(echo "$missing" | tr '\n' ',' | sed 's/,$//')
@@ -40,6 +43,9 @@ jobs:
       
       - name: Setup build matrix
         id: set-matrix
+        env:
+          TARGETS: ${{ vars.TARGETS }}
+          BINARIES: ${{ vars.BINARIES }}
         run: |
           matrix=$(echo 'null' | jq -c '
             {
@@ -51,7 +57,7 @@ jobs:
                 cross: (if (.value | has("cross")) then .value.cross else true end)
               }))
             }
-          ' --argjson targets '${{ vars.TARGETS }}' --argjson binaries '${{ vars.BINARIES }}')
+          ' --argjson targets "$TARGETS" --argjson binaries "$BINARIES")
           
           echo "matrix=$matrix" >> $GITHUB_OUTPUT
         shell: bash

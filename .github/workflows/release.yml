@@ -48,17 +48,13 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Get last tag
-        id: last-tag
-        run: |
-          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
-          echo "last_tag=$LAST_TAG" >> $GITHUB_OUTPUT
-          echo "Last tag: $LAST_TAG"
-
       - name: Generate release notes from conventional commits
         id: notes
+        env:
+          VERSION: ${{ env.VERSION }}
         run: |
-          LAST_TAG="${{ steps.last-tag.outputs.last_tag }}"
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          echo "Last tag: $LAST_TAG"
           
           if [ "$LAST_TAG" = "v0.0.0" ]; then
             COMMITS=$(git log --pretty=format:"%s%n%b" --no-merges)
@@ -67,7 +63,7 @@ jobs:
           fi
           
           if [ -z "$COMMITS" ]; then
-            NOTES="# Release ${{ env.VERSION }}\n\nNo changes since last release."
+            NOTES="# Release ${VERSION}\n\nNo changes since last release."
             echo "notes<<EOF" >> $GITHUB_OUTPUT
             echo -e "$NOTES" >> $GITHUB_OUTPUT
             echo "EOF" >> $GITHUB_OUTPUT
@@ -108,7 +104,7 @@ jobs:
           done <<< "$COMMITS"
           
           # Build release notes
-          NOTES="# Release ${{ env.VERSION }}\n\n"
+          NOTES="# Release ${VERSION}\n\n"
           
           if [ -n "$BREAKING" ]; then
             NOTES="${NOTES}## 🚨 Breaking Changes\n\n${BREAKING}\n"
@@ -194,17 +190,22 @@ jobs:
           fi
           
           DRY_RUN="${{ inputs.dry_run }}"
+          if [ "$DRY_RUN" = "true" ]; then
+            echo "## DRY RUN: Images that would be copied to ${{ matrix.registry.name }}" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "## Images copied to ${{ matrix.registry.name }}" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
           echo "$DOCKER_IMAGES" | jq -r '.[] | .bin' | while read -r IMAGE_NAME; do
             SOURCE_IMAGE="${{ env.GHCR_REGISTRY }}/${{ env.GHCR_REPO }}/${IMAGE_NAME}:${{ env.VERSION }}"
             TARGET_IMAGE="${{ matrix.registry.registry }}/${{ matrix.registry.repository }}/${IMAGE_NAME}:${{ env.VERSION }}"
             
-            if [ "$DRY_RUN" = "true" ]; then
-              echo "::notice::DRY RUN: Would copy ${SOURCE_IMAGE} to ${TARGET_IMAGE}"
-              echo "Would copy ${SOURCE_IMAGE} to ${TARGET_IMAGE}"
-            else
-              echo "Copying ${SOURCE_IMAGE} to ${TARGET_IMAGE}"
+            echo "Copying ${SOURCE_IMAGE} to ${TARGET_IMAGE} (Dry run: $DRY_RUN)" 
+            if [ "$DRY_RUN" != "true" ]; then
               docker buildx imagetools create --tag "${TARGET_IMAGE}" "${SOURCE_IMAGE}"
             fi
+            echo "- \`${SOURCE_IMAGE}\` → \`${TARGET_IMAGE}\`" >> $GITHUB_STEP_SUMMARY
           done
 
   publish-wheels:
@@ -239,8 +240,11 @@ jobs:
       - name: Dry run - Show what would be published
         if: ${{ inputs.dry_run }}
         run: |
-          echo "::notice::DRY RUN: Would publish the following packages to PyPI:"
-          ls -la dist_collected/
+          echo "## DRY RUN: Packages that would be published to PyPI" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          ls -la dist_collected/ >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
 
   create-release:
     needs: [generate-release-notes, publish-wheels, publish-images]
@@ -270,37 +274,33 @@ jobs:
         run: |
           FILES=$(find ./release-binaries ./release-wheels -type f 2>/dev/null | tr '\n' ' ' || true)
           if [ -z "$FILES" ]; then
-            echo "No files to attach to release"
-            gh release create "v${{ env.VERSION }}" \
-              --title "Release v${{ env.VERSION }}" \
-              --notes "${{ needs.generate-release-notes.outputs.notes }}"
-          else
-            gh release create "v${{ env.VERSION }}" \
-              --title "Release v${{ env.VERSION }}" \
-              --notes "${{ needs.generate-release-notes.outputs.notes }}" \
-              $FILES
+            echo "Error: No files to attach to release"
+            exit 1
           fi
+          gh release create "v${{ env.VERSION }}" \
+            --title "Release v${{ env.VERSION }}" \
+            --notes "${{ needs.generate-release-notes.outputs.notes }}" \
+            $FILES
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Dry run - Show what would be released
         if: ${{ inputs.dry_run }}
         run: |
-          echo "::notice::DRY RUN: Would create GitHub release with:"
-          echo "  Tag: v${{ env.VERSION }}"
-          echo "  Name: Release v${{ env.VERSION }}"
-          echo "  Files:"
-          find ./release-binaries -type f | while read file; do
-            echo "    - $file"
-          done
-          find ./release-wheels -type f | while read file; do
-            echo "    - $file"
-          done
-          echo ""
-          echo "Release notes:"
-          echo "${{ needs.generate-release-notes.outputs.notes }}"
-          
           # Write release notes to job summary
           echo "## Release Notes (Dry Run)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "${{ needs.generate-release-notes.outputs.notes }}" >> $GITHUB_STEP_SUMMARY
+
+          RELEASE_INFO="DRY RUN: Would create GitHub release with:\n"
+          RELEASE_INFO="${RELEASE_INFO}  Tag: v${{ env.VERSION }}\n"
+          RELEASE_INFO="${RELEASE_INFO}  Name: Release v${{ env.VERSION }}\n"
+          RELEASE_INFO="${RELEASE_INFO}  Files:\n"
+          FILES=$(find ./release-binaries ./release-wheels -type f 2>/dev/null | sed 's/^/    - /' || true)
+          RELEASE_INFO="${RELEASE_INFO}${FILES}\n"
+          
+          echo -e "$RELEASE_INFO"
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo -e "$RELEASE_INFO" >> $GITHUB_STEP_SUMMARY
+          
+         
