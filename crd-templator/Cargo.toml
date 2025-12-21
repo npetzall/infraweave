@@ -2,6 +2,7 @@
 name = "crd_templator"
 version.workspace = true
 edition.workspace = true
+rust-version.workspace = true
 license-file = "../LICENSE"
 
 [lints]

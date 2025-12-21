@@ -2,6 +2,7 @@
 name = "operator"
 version.workspace = true
 edition.workspace = true
+rust-version.workspace = true
 license-file = "../LICENSE"
 
 [package.metadata.cross.build.env]
