@@ -33,9 +33,10 @@ pub async fn metrics_handler(
     // Initialize each module and status with zero values
     for module in &modules {
         for &status in &AVAILABLE_STATUSES {
+            let status_str = status.to_string();
             metrics
                 .event_counter
-                .with_label_values(&[module, status])
+                .with_label_values(&[module, &status_str])
                 .set(0);
         }
         // metrics.running_jobs.with_label_values(&[module]).set(0);
@@ -56,9 +57,10 @@ pub async fn metrics_handler(
             if available_modules.insert(event.module.clone()) {
                 // Initialize the new module's metrics with zero for each status
                 for &status in &AVAILABLE_STATUSES {
+                    let status_str = status.to_string();
                     metrics
                         .event_counter
-                        .with_label_values(&[&event.module, status])
+                        .with_label_values(&[&event.module, &status_str])
                         .set(0);
                 }
                 // metrics.running_jobs.with_label_values(&[&event.module]).set(0);
@@ -67,9 +69,10 @@ pub async fn metrics_handler(
 
         // Set or increment counters based on the event's status
         // metrics.observe_event(event.status.as_str());
+        let status_str = event.status.as_str().to_string();
         metrics
             .event_counter
-            .with_label_values(&[&event.module, event.status.as_str()])
+            .with_label_values(&[&event.module, &status_str])
             .inc();
 
         // Handle specific statuses with additional metrics

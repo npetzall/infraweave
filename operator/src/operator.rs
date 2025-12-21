@@ -1,4 +1,3 @@
-use anyhow;
 use env_common::interface::GenericCloudHandler;
 use env_common::logic::{is_deployment_in_progress, run_claim};
 use env_defs::{CloudProvider, CloudProviderCommon, DeploymentResp, ExtraData, ModuleResp};
@@ -188,7 +187,7 @@ pub async fn list_and_apply_modules(
 
 async fn crd_already_exists(client: &KubeClient, crd_name: &str) -> bool {
     let crds: Api<CustomResourceDefinition> = Api::all(client.clone());
-    matches!(crds.get(crd_name).await, Ok(_))
+    crds.get(crd_name).await.is_ok()
 }
 
 /// Starts controllers for all infraweave.io CRDs
@@ -448,38 +447,38 @@ async fn reconcile_resource_nonblocking(
                 .and_then(|c| c.as_str())
                 .unwrap_or("");
 
-            if !last_check.is_empty() {
-                if let Ok(last_check_time) = chrono::DateTime::parse_from_rfc3339(last_check) {
-                    let now = chrono::Utc::now();
-                    let duration =
-                        now.signed_duration_since(last_check_time.with_timezone(&chrono::Utc));
+            if !last_check.is_empty()
+                && let Ok(last_check_time) = chrono::DateTime::parse_from_rfc3339(last_check)
+            {
+                let now = chrono::Utc::now();
+                let duration =
+                    now.signed_duration_since(last_check_time.with_timezone(&chrono::Utc));
 
-                    if duration.num_seconds() > 30 {
-                        println!(
-                            "Status '{}' without jobId for {} seconds (likely old CRD schema). Clearing to start fresh.",
-                            current_status, duration.num_seconds()
-                        );
-                        // Clear the inconsistent status
-                        let namespace = fresh_resource
-                            .namespace()
-                            .unwrap_or_else(|| "default".to_string());
-                        let namespaced_api = Api::<DynamicObject>::namespaced_with(
-                            client.clone(),
-                            &namespace,
-                            api_resource,
-                        );
-                        let status_patch = json!({
-                            "status": {
-                                "resourceStatus": "Ready for reconciliation",
-                                "jobId": "",
-                            }
-                        });
-                        let patch_params = PatchParams::default();
-                        namespaced_api
-                            .patch_status(name, &patch_params, &Patch::Merge(&status_patch))
-                            .await?;
-                        return Ok(Action::requeue(Duration::from_secs(5)));
-                    }
+                if duration.num_seconds() > 30 {
+                    println!(
+                        "Status '{}' without jobId for {} seconds (likely old CRD schema). Clearing to start fresh.",
+                        current_status, duration.num_seconds()
+                    );
+                    // Clear the inconsistent status
+                    let namespace = fresh_resource
+                        .namespace()
+                        .unwrap_or_else(|| "default".to_string());
+                    let namespaced_api = Api::<DynamicObject>::namespaced_with(
+                        client.clone(),
+                        &namespace,
+                        api_resource,
+                    );
+                    let status_patch = json!({
+                        "status": {
+                            "resourceStatus": "Ready for reconciliation",
+                            "jobId": "",
+                        }
+                    });
+                    let patch_params = PatchParams::default();
+                    namespaced_api
+                        .patch_status(name, &patch_params, &Patch::Merge(&status_patch))
+                        .await?;
+                    return Ok(Action::requeue(Duration::from_secs(5)));
                 }
             }
 
@@ -593,17 +592,17 @@ async fn reconcile_resource_nonblocking(
     let mut should_do_full_check = true;
     let mut time_since_last_check = 0i64;
 
-    if !last_check.is_empty() {
-        if let Ok(last_check_time) = chrono::DateTime::parse_from_rfc3339(last_check) {
-            let now = chrono::Utc::now();
-            let duration = now.signed_duration_since(last_check_time.with_timezone(&chrono::Utc));
-            time_since_last_check = duration.num_seconds();
+    if !last_check.is_empty()
+        && let Ok(last_check_time) = chrono::DateTime::parse_from_rfc3339(last_check)
+    {
+        let now = chrono::Utc::now();
+        let duration = now.signed_duration_since(last_check_time.with_timezone(&chrono::Utc));
+        time_since_last_check = duration.num_seconds();
 
-            // If we checked status less than 25 seconds ago, just fetch logs
-            // (Use 25s instead of 30s to account for timing variations)
-            if time_since_last_check < 25 {
-                should_do_full_check = false;
-            }
+        // If we checked status less than 25 seconds ago, just fetch logs
+        // (Use 25s instead of 30s to account for timing variations)
+        if time_since_last_check < 25 {
+            should_do_full_check = false;
         }
     }
 
@@ -683,7 +682,7 @@ async fn reconcile_resource_nonblocking(
 
     if in_progress {
         // Job still running, update status and requeue
-        let status_text = format!("Apply - in progress");
+        let status_text = "Apply - in progress".to_string();
         let update_time = match depl {
             Some(ref d) => epoch_to_timestamp(d.epoch),
             None => get_timestamp(),
@@ -749,12 +748,12 @@ async fn reconcile_resource_nonblocking(
     let mut final_message = String::new();
 
     // Add error text from deployment if available
-    if let Some(ref d) = depl {
-        if !d.error_text.is_empty() {
-            final_message.push_str("ERROR: ");
-            final_message.push_str(&d.error_text);
-            final_message.push_str("\n\n");
-        }
+    if let Some(ref d) = depl
+        && !d.error_text.is_empty()
+    {
+        final_message.push_str("ERROR: ");
+        final_message.push_str(&d.error_text);
+        final_message.push_str("\n\n");
     }
 
     // Add change record output if available
@@ -1046,16 +1045,16 @@ async fn handle_resource_deletion_nonblocking(
     let mut should_do_full_check = true;
     let mut time_since_last_check = 0i64;
 
-    if !last_check.is_empty() {
-        if let Ok(last_check_time) = chrono::DateTime::parse_from_rfc3339(last_check) {
-            let now = chrono::Utc::now();
-            let duration = now.signed_duration_since(last_check_time.with_timezone(&chrono::Utc));
-            time_since_last_check = duration.num_seconds();
+    if !last_check.is_empty()
+        && let Ok(last_check_time) = chrono::DateTime::parse_from_rfc3339(last_check)
+    {
+        let now = chrono::Utc::now();
+        let duration = now.signed_duration_since(last_check_time.with_timezone(&chrono::Utc));
+        time_since_last_check = duration.num_seconds();
 
-            // If we checked status less than 25 seconds ago, just fetch logs
-            if time_since_last_check < 25 {
-                should_do_full_check = false;
-            }
+        // If we checked status less than 25 seconds ago, just fetch logs
+        if time_since_last_check < 25 {
+            should_do_full_check = false;
         }
     }
 
@@ -1154,11 +1153,11 @@ async fn handle_resource_deletion_nonblocking(
 
     // Build error message if there is one
     let mut error_message = String::new();
-    if let Some(ref d) = depl {
-        if !d.error_text.is_empty() {
-            error_message.push_str("ERROR: ");
-            error_message.push_str(&d.error_text);
-        }
+    if let Some(ref d) = depl
+        && !d.error_text.is_empty()
+    {
+        error_message.push_str("ERROR: ");
+        error_message.push_str(&d.error_text);
     }
     if error_message.is_empty() {
         error_message = if is_failure {
@@ -1351,10 +1350,10 @@ async fn fetch_and_apply_exising_deployments(
     // Group deployments by namespace
     let mut deployments_by_namespace: BTreeMap<String, Vec<_>> = BTreeMap::new();
     for deployment in deployments {
-        let namespace = deployment
+          let namespace = deployment
             .environment
             .split('/')
-            .last()
+            .next_back()
             .unwrap_or("default")
             .to_string();
         deployments_by_namespace
@@ -1415,11 +1414,11 @@ status:
   resourceStatus: {}
 "#,
         module.module_name,
-        deployment.deployment_id.split('/').last().unwrap(),
+        deployment.deployment_id.split('/').next_back().unwrap(),
         deployment
             .environment
             .split('/')
-            .last()
+            .next_back()
             .unwrap_or("default"),
         FINALIZER_NAME,
         deployment.module_version,
@@ -1443,16 +1442,15 @@ async fn wait_for_crd_to_be_ready(client: kube::Client, module: &str) {
     for _attempt in 0..10 {
         match crds.get(&crd_name).await {
             Ok(crd) => {
-                if let Some(status) = crd.status {
-                    if status
+                if let Some(status) = crd.status
+                    && status
                         .conditions
                         .unwrap_or(vec![])
                         .iter()
                         .any(|cond| cond.type_ == "Established" && cond.status == "True")
-                    {
-                        println!("CRD {} is established.", crd_name);
-                        break;
-                    }
+                {
+                    println!("CRD {} is established.", crd_name);
+                    break;
                 }
             }
             Err(e) => {
@@ -1662,8 +1660,7 @@ async fn reset_retry_count(
 }
 
 fn to_kube_err(e: anyhow::Error) -> kube::Error {
-    kube::Error::Service(Box::new(std::io::Error::new(
-        std::io::ErrorKind::Other,
+      kube::Error::Service(Box::new(std::io::Error::other(
         e.to_string(),
     )))
 }

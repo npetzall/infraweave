@@ -103,24 +103,23 @@ impl VariableInput {
         }
 
         // Number validation
-        if type_lower.contains("number") || type_lower.contains("int") {
-            if self.user_value.parse::<f64>().is_err() {
-                return Err(format!(
-                    "Number field must be numeric, got '{}'",
-                    self.user_value
-                ));
-            }
+        if (type_lower.contains("number") || type_lower.contains("int"))
+            && self.user_value.parse::<f64>().is_err() {
+            return Err(format!(
+                "Number field must be numeric, got '{}'",
+                self.user_value
+            ));
         }
 
         // Map/Object validation - check if it's valid JSON
         if type_lower.contains("map") || type_lower.contains("object") {
             if !self.user_value.starts_with('{') {
-                return Err(format!(
-                    "Map field must be a JSON object starting with '{{'"
-                ));
+                return Err(
+                    "Map field must be a JSON object starting with '{'".to_string()
+                );
             }
             if serde_json::from_str::<serde_json::Value>(&self.user_value).is_err() {
-                return Err(format!("Map field must be valid JSON"));
+                return Err("Map field must be valid JSON".to_string());
             }
         }
 
@@ -128,10 +127,10 @@ impl VariableInput {
         if type_lower.contains("list") || type_lower.contains("array") || type_lower.contains("set")
         {
             if !self.user_value.starts_with('[') {
-                return Err(format!("List field must be a JSON array starting with '['"));
+                return Err("List field must be a JSON array starting with '['".to_string());
             }
             if serde_json::from_str::<serde_json::Value>(&self.user_value).is_err() {
-                return Err(format!("List field must be valid JSON"));
+                return Err("List field must be valid JSON".to_string());
             }
         }
 
@@ -232,7 +231,15 @@ impl ClaimBuilderState {
             validation_error: None,
         }
     }
+}
 
+impl Default for ClaimBuilderState {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl ClaimBuilderState {
     /// Open the claim builder for a module
     pub fn open_for_module(&mut self, module: ModuleResp) {
         self.source_module = Some(module.clone());
@@ -564,9 +571,7 @@ impl ClaimBuilderState {
 
         // Validate all variable inputs
         for var in &self.variable_inputs {
-            if let Err(err) = var.validate_value() {
-                return Err(err);
-            }
+            var.validate_value()?;
         }
 
         Ok(())

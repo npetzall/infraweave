@@ -129,7 +129,7 @@ impl EventsState {
 
         for event in &self.events_data {
             jobs.entry(event.job_id.clone())
-                .or_insert_with(Vec::new)
+                .or_default()
                 .push(event);
         }
 

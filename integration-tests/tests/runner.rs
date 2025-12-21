@@ -21,11 +21,10 @@ mod runner_tests {
 
             env_common::publish_provider(
                 &handler,
-                &current_dir
+                current_dir
                     .join("providers/aws-5/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
+                    .unwrap(),
                 Some("0.1.2"),
             )
             .await
@@ -33,12 +32,11 @@ mod runner_tests {
 
             env_common::publish_module(
                 &handler,
-                &current_dir
+                current_dir
                     .join("modules/s3bucket-dev/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
-                &"dev".to_string(),
+                    .unwrap(),
+                "dev",
                 Some("0.1.2-dev+test.10"),
                 None,
             )
@@ -86,7 +84,7 @@ mod runner_tests {
                 .await
             {
                 Ok((deployment, dependencies)) => (deployment, dependencies),
-                Err(_e) => Err("error").unwrap(),
+                Err(_e) => panic!("Failed to get deployment"),
             };
 
             assert_eq!(deployment.is_some(), true);
@@ -95,20 +93,26 @@ mod runner_tests {
             let payload = payload_with_variables.unwrap().payload;
             let payload_str = serde_json::to_string(&payload).unwrap();
 
-            env::set_var("PAYLOAD", payload_str);
-            env::set_var("TF_BUCKET", "dummy-tf-bucket");
-            env::set_var("REGION", "dummy-region");
+            unsafe {
+                env::set_var("PAYLOAD", payload_str);
+                env::set_var("TF_BUCKET", "dummy-tf-bucket");
+                env::set_var("REGION", "dummy-region");
+            }
 
             // Set cloud provider specific environment variables
             match handler.get_cloud_provider() {
                 "aws" => {
-                    env::set_var("TF_DYNAMODB_TABLE", "dummy-dynamodb-table");
+                    unsafe {
+                        env::set_var("TF_DYNAMODB_TABLE", "dummy-dynamodb-table");
+                    }
                 }
                 "azure" => {
-                    env::set_var("CONTAINER_GROUP_NAME", "running-test-job-id");
-                    env::set_var("ACCOUNT_ID", "dummy-account-id");
-                    env::set_var("STORAGE_ACCOUNT", "dummy-storage-account");
-                    env::set_var("RESOURCE_GROUP_NAME", "dummy-resource-group");
+                    unsafe {
+                        env::set_var("CONTAINER_GROUP_NAME", "running-test-job-id");
+                        env::set_var("ACCOUNT_ID", "dummy-account-id");
+                        env::set_var("STORAGE_ACCOUNT", "dummy-storage-account");
+                        env::set_var("RESOURCE_GROUP_NAME", "dummy-resource-group");
+                    }
                 }
                 _ => panic!("Unsupported cloud provider"),
             }
@@ -125,7 +129,7 @@ mod runner_tests {
                     assert_eq!(deployment.is_some(), true);
                     assert_eq!(deployment.unwrap().status, "successful"); // This is set as last step in the runner
                 }
-                Err(_e) => Err("Failed to get deployment").unwrap(),
+                Err(_e) => panic!("Failed to get deployment"),
             };
 
             // TODO: Mock the commands and verify that all expected commands were run

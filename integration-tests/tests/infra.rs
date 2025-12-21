@@ -19,11 +19,10 @@ mod infra_tests {
 
             env_common::publish_provider(
                 &handler,
-                &current_dir
+                current_dir
                     .join("providers/aws-5/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
+                    .unwrap(),
                 Some("0.1.2"),
             )
             .await
@@ -31,12 +30,11 @@ mod infra_tests {
 
             env_common::publish_module(
                 &handler,
-                &current_dir
+                current_dir
                     .join("modules/s3bucket-dev/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
-                &"dev".to_string(),
+                    .unwrap(),
+                "dev",
                 Some("0.1.2-dev+test.10"),
                 None,
             )
@@ -82,7 +80,7 @@ mod infra_tests {
                 .await
             {
                 Ok((deployment, dependencies)) => (deployment, dependencies),
-                Err(_e) => Err("error").unwrap(),
+                Err(_e) => panic!("Failed to get deployment"),
             };
 
             assert_eq!(deployment.is_some(), true);
@@ -109,11 +107,10 @@ mod infra_tests {
 
             env_common::publish_provider(
                 &handler,
-                &current_dir
+                current_dir
                     .join("providers/aws-5/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
+                    .unwrap(),
                 Some("0.1.2"),
             )
             .await
@@ -121,12 +118,11 @@ mod infra_tests {
 
             env_common::publish_module(
                 &handler,
-                &current_dir
+                current_dir
                     .join("modules/s3bucket-dev/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
-                &"dev".to_string(),
+                    .unwrap(),
+                "dev",
                 Some("0.1.2-dev+test.10"),
                 None,
             )
@@ -169,11 +165,10 @@ mod infra_tests {
 
             env_common::publish_provider(
                 &handler,
-                &current_dir
+                current_dir
                     .join("providers/aws-5/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
+                    .unwrap(),
                 Some("0.1.2"),
             )
             .await
@@ -181,12 +176,11 @@ mod infra_tests {
 
             env_common::publish_module(
                 &handler,
-                &current_dir
+                current_dir
                     .join("modules/s3bucket-stable/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
-                &"stable".to_string(),
+                    .unwrap(),
+                "stable",
                 Some("0.1.2"),
                 None,
             )
@@ -232,7 +226,7 @@ mod infra_tests {
                 .await
             {
                 Ok((deployment, dependencies)) => (deployment, dependencies),
-                Err(_e) => Err("error").unwrap(),
+                Err(_e) => panic!("Failed to get deployment"),
             };
 
             assert_eq!(deployment.is_some(), true);
@@ -256,11 +250,10 @@ mod infra_tests {
 
             env_common::publish_provider(
                 &handler,
-                &current_dir
+                current_dir
                     .join("providers/aws-5/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
+                    .unwrap(),
                 Some("0.1.2"),
             )
             .await
@@ -269,12 +262,11 @@ mod infra_tests {
             // Publish the test module
             env_common::publish_module(
                 &handler,
-                &current_dir
+                current_dir
                     .join("modules/test-nullable-with-default/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
-                &"dev".to_string(),
+                    .unwrap(),
+                "dev",
                 Some("0.1.0-dev"),
                 None,
             )
@@ -350,11 +342,10 @@ mod infra_tests {
 
             env_common::publish_provider(
                 &handler,
-                &current_dir
+                current_dir
                     .join("providers/aws-5/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
+                    .unwrap(),
                 Some("0.1.2"),
             )
             .await
@@ -363,12 +354,11 @@ mod infra_tests {
             // Publish module
             env_common::publish_module(
                 &handler,
-                &current_dir
+                current_dir
                     .join("modules/s3bucket-dev/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
-                &"dev".to_string(),
+                    .unwrap(),
+                "dev",
                 Some("0.1.2-dev+test.10"),
                 None,
             )
@@ -502,11 +492,10 @@ mod infra_tests {
             // Step 1: Publish provider
             env_common::publish_provider(
                 &handler,
-                &current_dir
+                current_dir
                     .join("providers/aws-5/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
+                    .unwrap(),
                 Some("0.1.2"),
             )
             .await
@@ -515,12 +504,11 @@ mod infra_tests {
             // Step 2: Publish module version 0.1.2
             env_common::publish_module(
                 &handler,
-                &current_dir
+                current_dir
                     .join("modules/s3bucket-dev/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
-                &"dev".to_string(),
+                    .unwrap(),
+                "dev",
                 Some("0.1.2-dev+test.10"),
                 None,
             )
@@ -537,15 +525,13 @@ mod infra_tests {
                     .collect();
 
             // Modify the claim to explicitly use version 0.1.2
-            if let Some(claim) = claims.get_mut(0) {
-                if let Some(spec) = claim.get_mut("spec") {
-                    if let Some(spec_map) = spec.as_mapping_mut() {
-                        spec_map.insert(
-                            serde_yaml::Value::String("moduleVersion".to_string()),
-                            serde_yaml::Value::String("0.1.2-dev+test.10".to_string()),
-                        );
-                    }
-                }
+            if let Some(claim) = claims.get_mut(0)
+                && let Some(spec) = claim.get_mut("spec")
+                && let Some(spec_map) = spec.as_mapping_mut() {
+                spec_map.insert(
+                    serde_yaml::Value::String("moduleVersion".to_string()),
+                    serde_yaml::Value::String("0.1.2-dev+test.10".to_string()),
+                );
             }
 
             let environment = "k8s-cluster-1/playground".to_string();
@@ -591,12 +577,11 @@ mod infra_tests {
             // Step 4: Publish a newer version 0.1.3 to ensure 0.1.2 is not the latest
             env_common::publish_module(
                 &handler,
-                &current_dir
+                current_dir
                     .join("modules/s3bucket-dev/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
-                &"dev".to_string(),
+                    .unwrap(),
+                "dev",
                 Some("0.1.3-dev+test.11"),
                 None,
             )
@@ -660,11 +645,10 @@ mod infra_tests {
             // Step 1: Publish provider
             env_common::publish_provider(
                 &handler,
-                &current_dir
+                current_dir
                     .join("providers/aws-5/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
+                    .unwrap(),
                 Some("0.1.2"),
             )
             .await
@@ -673,12 +657,11 @@ mod infra_tests {
             // Step 2: Publish module version 0.1.4
             env_common::publish_module(
                 &handler,
-                &current_dir
+                current_dir
                     .join("modules/s3bucket-dev/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
-                &"dev".to_string(),
+                    .unwrap(),
+                "dev",
                 Some("0.1.4-dev+test.20"),
                 None,
             )
@@ -688,12 +671,11 @@ mod infra_tests {
             // Step 3: Publish a newer version 0.1.5 to ensure 0.1.4 is not the latest
             env_common::publish_module(
                 &handler,
-                &current_dir
+                current_dir
                     .join("modules/s3bucket-dev/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
-                &"dev".to_string(),
+                    .unwrap(),
+                "dev",
                 Some("0.1.5-dev+test.21"),
                 None,
             )
@@ -730,15 +712,13 @@ mod infra_tests {
                     .collect();
 
             // Modify the claim to use deprecated version 0.1.4
-            if let Some(claim) = claims.get_mut(0) {
-                if let Some(spec) = claim.get_mut("spec") {
-                    if let Some(spec_map) = spec.as_mapping_mut() {
-                        spec_map.insert(
-                            serde_yaml::Value::String("moduleVersion".to_string()),
-                            serde_yaml::Value::String("0.1.4-dev+test.20".to_string()),
-                        );
-                    }
-                }
+            if let Some(claim) = claims.get_mut(0)
+                && let Some(spec) = claim.get_mut("spec")
+                && let Some(spec_map) = spec.as_mapping_mut() {
+                spec_map.insert(
+                    serde_yaml::Value::String("moduleVersion".to_string()),
+                    serde_yaml::Value::String("0.1.4-dev+test.20".to_string()),
+                );
             }
 
             let environment = "k8s-cluster-1/playground-new".to_string();

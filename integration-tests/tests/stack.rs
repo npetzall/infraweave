@@ -20,11 +20,10 @@ mod stack_tests {
 
             env_common::publish_provider(
                 &handler,
-                &current_dir
+                current_dir
                     .join("providers/aws-5/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
+                    .unwrap(),
                 Some("0.1.2"),
             )
             .await
@@ -32,12 +31,11 @@ mod stack_tests {
 
             env_common::publish_module(
                 &handler,
-                &current_dir
+                current_dir
                     .join("modules/s3bucket-dev/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
-                &"dev".to_string(),
+                    .unwrap(),
+                "dev",
                 Some("0.1.2-dev+test.10"),
                 None,
             )
@@ -46,12 +44,11 @@ mod stack_tests {
 
             env_common::publish_module(
                 &handler,
-                &current_dir
+                current_dir
                     .join("modules/s3bucket-dev/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
-                &"dev".to_string(),
+                    .unwrap(),
+                "dev",
                 Some("0.1.3-dev+test.10"),
                 None,
             )
@@ -60,12 +57,11 @@ mod stack_tests {
 
             env_common::publish_stack(
                 &handler,
-                &current_dir
+                current_dir
                     .join("stacks/bucketcollection-dev/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
-                &"dev".to_string(),
+                    .unwrap(),
+                "dev",
                 Some("0.1.2-dev+test.10"),
                 None,
             )
@@ -151,11 +147,10 @@ mod stack_tests {
 
             env_common::publish_provider(
                 &handler,
-                &current_dir
+                current_dir
                     .join("providers/aws-5/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
+                    .unwrap(),
                 Some("0.1.2"),
             )
             .await
@@ -163,12 +158,11 @@ mod stack_tests {
 
             env_common::publish_module(
                 &handler,
-                &current_dir
+                current_dir
                     .join("modules/s3bucket-dev/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
-                &"dev".to_string(),
+                    .unwrap(),
+                "dev",
                 Some("0.1.2-dev+test.10"),
                 None,
             )
@@ -177,12 +171,11 @@ mod stack_tests {
 
             env_common::publish_module(
                 &handler,
-                &current_dir
+                current_dir
                     .join("modules/s3bucket-dev/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
-                &"dev".to_string(),
+                    .unwrap(),
+                "dev",
                 Some("0.1.3-dev+test.10"),
                 None,
             )
@@ -191,12 +184,11 @@ mod stack_tests {
 
             let result = env_common::publish_stack(
                 &handler,
-                &current_dir
+                current_dir
                     .join("stacks/bucketcollection-missing-region/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
-                &"dev".to_string(),
+                    .unwrap(),
+                "dev",
                 Some("0.1.2-dev+test.10"),
                 None,
             )
@@ -216,11 +208,10 @@ mod stack_tests {
 
             env_common::publish_provider(
                 &handler,
-                &current_dir
+                current_dir
                     .join("providers/aws-5/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
+                    .unwrap(),
                 Some("0.1.2"),
             )
             .await
@@ -228,12 +219,11 @@ mod stack_tests {
 
             env_common::publish_module(
                 &handler,
-                &current_dir
+                current_dir
                     .join("modules/s3bucket-dev/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
-                &"dev".to_string(),
+                    .unwrap(),
+                "dev",
                 Some("0.1.2-dev+test.10"),
                 None,
             )
@@ -242,12 +232,11 @@ mod stack_tests {
 
             env_common::publish_module(
                 &handler,
-                &current_dir
+                current_dir
                     .join("modules/s3bucket-dev/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
-                &"dev".to_string(),
+                    .unwrap(),
+                "dev",
                 Some("0.1.3-dev+test.10"),
                 None,
             )
@@ -256,12 +245,11 @@ mod stack_tests {
 
             let result = env_common::publish_stack(
                 &handler,
-                &current_dir
+                current_dir
                     .join("stacks/bucketcollection-invalid-variable/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
-                &"dev".to_string(),
+                    .unwrap(),
+                "dev",
                 Some("0.1.2-dev+test.10"),
                 None,
             )
@@ -281,11 +269,10 @@ mod stack_tests {
 
             env_common::publish_provider(
                 &handler,
-                &current_dir
+                current_dir
                     .join("providers/aws-5-us-east-1/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
+                    .unwrap(),
                 Some("0.1.2"),
             )
             .await
@@ -293,12 +280,11 @@ mod stack_tests {
 
             env_common::publish_module(
                 &handler,
-                &current_dir
+                current_dir
                     .join("modules/route53record/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
-                &"dev".to_string(),
+                    .unwrap(),
+                "dev",
                 Some("0.1.2-dev+test.10"),
                 None,
             )
@@ -307,12 +293,11 @@ mod stack_tests {
 
             env_common::publish_module(
                 &handler,
-                &current_dir
+                current_dir
                     .join("modules/route53record/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
-                &"dev".to_string(),
+                    .unwrap(),
+                "dev",
                 Some("0.1.3-dev+test.10"),
                 None,
             )
@@ -321,12 +306,11 @@ mod stack_tests {
 
             env_common::publish_stack(
                 &handler,
-                &current_dir
+                current_dir
                     .join("stacks/route53records-input-all/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
-                &"dev".to_string(),
+                    .unwrap(),
+                "dev",
                 Some("0.1.4-dev+test.10"),
                 None,
             )
@@ -378,7 +362,7 @@ mod stack_tests {
                     Some(serde_json::json!(["dev1.example.com", "dev2.example.com"]))
                 );
             } else {
-                assert!(false, "route1__records is missing")
+                panic!("route1__records is missing")
             }
 
             if let Some(route1_ttl) = stacks[0]
@@ -389,7 +373,7 @@ mod stack_tests {
                 assert_eq!(route1_ttl._type, "number");
                 assert_eq!(route1_ttl.default, Some(serde_json::json!(300))); // Default value in variables.tf is null, but 300 is set in claim
             } else {
-                assert!(false, "route1__ttl is missing");
+                panic!("route1__ttl is missing");
             }
 
             if let Some(route2_records) = stacks[0]
@@ -403,7 +387,7 @@ mod stack_tests {
                     Some(serde_json::json!(["uat1.example.com", "uat2.example.com"]))
                 );
             } else {
-                assert!(false, "route1__records is missing")
+                panic!("route1__records is missing")
             }
 
             if let Some(route2_ttl) = stacks[0]
@@ -414,7 +398,7 @@ mod stack_tests {
                 assert_eq!(route2_ttl._type, "number");
                 assert_eq!(route2_ttl.default, None);
             } else {
-                assert!(false, "route1__ttl is missing");
+                panic!("route1__ttl is missing");
             }
         })
         .await;
@@ -429,11 +413,10 @@ mod stack_tests {
 
             env_common::publish_provider(
                 &handler,
-                &current_dir
+                current_dir
                     .join("providers/aws-5-us-east-1/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
+                    .unwrap(),
                 Some("0.1.2"),
             )
             .await
@@ -441,12 +424,11 @@ mod stack_tests {
 
             env_common::publish_module(
                 &handler,
-                &current_dir
+                current_dir
                     .join("modules/route53record/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
-                &"dev".to_string(),
+                    .unwrap(),
+                "dev",
                 Some("0.1.2-dev+test.10"),
                 None,
             )
@@ -455,12 +437,11 @@ mod stack_tests {
 
             env_common::publish_module(
                 &handler,
-                &current_dir
+                current_dir
                     .join("modules/route53record/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
-                &"dev".to_string(),
+                    .unwrap(),
+                "dev",
                 Some("0.1.3-dev+test.10"),
                 None,
             )
@@ -469,12 +450,11 @@ mod stack_tests {
 
             env_common::publish_stack(
                 &handler,
-                &current_dir
+                current_dir
                     .join("stacks/route53records-input-none/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
-                &"dev".to_string(),
+                    .unwrap(),
+                "dev",
                 Some("0.1.4-dev+test.10"),
                 None,
             )
@@ -526,7 +506,7 @@ mod stack_tests {
                     Some(serde_json::json!(["dev1.example.com", "dev2.example.com"]))
                 );
             } else {
-                assert!(false, "route1__records is missing")
+                panic!("route1__records is missing")
             }
 
             if let Some(route1_ttl) = stacks[0]
@@ -537,7 +517,7 @@ mod stack_tests {
                 assert_eq!(route1_ttl._type, "number");
                 assert_eq!(route1_ttl.default, Some(serde_json::json!(300))); // Default value in variables.tf is null, but 300 is set in claim
             } else {
-                assert!(false, "route1__ttl is missing");
+                panic!("route1__ttl is missing");
             }
 
             if let Some(route2_records) = stacks[0]
@@ -551,7 +531,7 @@ mod stack_tests {
                     Some(serde_json::json!(["uat1.example.com", "uat2.example.com"]))
                 );
             } else {
-                assert!(false, "route1__records is missing")
+                panic!("route1__records is missing")
             }
 
             if let Some(route2_ttl) = stacks[0]
@@ -562,7 +542,7 @@ mod stack_tests {
                 assert_eq!(route2_ttl._type, "number");
                 assert_eq!(route2_ttl.default, None);
             } else {
-                assert!(false, "route1__ttl is missing");
+                panic!("route1__ttl is missing");
             }
         })
         .await;
@@ -577,11 +557,10 @@ mod stack_tests {
 
             env_common::publish_provider(
                 &handler,
-                &current_dir
+                current_dir
                     .join("providers/aws-5/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
+                    .unwrap(),
                 Some("0.1.2"),
             )
             .await
@@ -589,11 +568,10 @@ mod stack_tests {
 
             env_common::publish_provider(
                 &handler,
-                &current_dir
+                current_dir
                     .join("providers/helm-3/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
+                    .unwrap(),
                 Some("0.1.2"),
             )
             .await
@@ -601,12 +579,11 @@ mod stack_tests {
 
             env_common::publish_module(
                 &handler,
-                &current_dir
+                current_dir
                     .join("modules/nginx-ingress/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
-                &"dev".to_string(),
+                    .unwrap(),
+                "dev",
                 Some("0.5.5-dev+test.1"),
                 None,
             )
@@ -615,12 +592,11 @@ mod stack_tests {
 
             env_common::publish_module(
                 &handler,
-                &current_dir
+                current_dir
                     .join("modules/s3bucket-dev/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
-                &"dev".to_string(),
+                    .unwrap(),
+                "dev",
                 Some("0.1.2-dev+test.10"),
                 None,
             )
@@ -629,12 +605,11 @@ mod stack_tests {
 
             env_common::publish_stack(
                 &handler,
-                &current_dir
+                current_dir
                     .join("stacks/providermix/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
-                &"dev".to_string(),
+                    .unwrap(),
+                "dev",
                 Some("0.1.4-dev+test.10"),
                 None,
             )
@@ -713,11 +688,10 @@ mod stack_tests {
 
             env_common::publish_provider(
                 &handler,
-                &current_dir
+                current_dir
                     .join("providers/aws-5/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
+                    .unwrap(),
                 Some("0.1.2"),
             )
             .await
@@ -725,11 +699,10 @@ mod stack_tests {
 
             env_common::publish_provider(
                 &handler,
-                &current_dir
+                current_dir
                     .join("providers/aws-5-us-east-1/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
+                    .unwrap(),
                 Some("0.1.2"),
             )
             .await
@@ -737,12 +710,11 @@ mod stack_tests {
 
             env_common::publish_module(
                 &handler,
-                &current_dir
+                current_dir
                     .join("modules/route53alias/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
-                &"dev".to_string(),
+                    .unwrap(),
+                "dev",
                 Some("0.5.5-dev+test.1"),
                 None,
             )
@@ -751,12 +723,11 @@ mod stack_tests {
 
             env_common::publish_module(
                 &handler,
-                &current_dir
+                current_dir
                     .join("modules/s3bucket-web/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
-                &"dev".to_string(),
+                    .unwrap(),
+                "dev",
                 Some("0.1.2-dev+test.10"),
                 None,
             )
@@ -765,12 +736,11 @@ mod stack_tests {
 
             env_common::publish_stack(
                 &handler,
-                &current_dir
+                current_dir
                     .join("stacks/static-website/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
-                &"dev".to_string(),
+                    .unwrap(),
+                "dev",
                 Some("0.1.4-dev+test.10"),
                 None,
             )
@@ -837,11 +807,10 @@ mod stack_tests {
 
             env_common::publish_provider(
                 &handler,
-                &current_dir
+                current_dir
                     .join("providers/aws-5/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
+                    .unwrap(),
                 Some("0.1.2"),
             )
             .await
@@ -849,11 +818,10 @@ mod stack_tests {
 
             env_common::publish_provider(
                 &handler,
-                &current_dir
+                current_dir
                     .join("providers/helm-3/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
+                    .unwrap(),
                 Some("0.1.2"),
             )
             .await
@@ -861,11 +829,10 @@ mod stack_tests {
 
             env_common::publish_provider(
                 &handler,
-                &current_dir
+                current_dir
                     .join("providers/kubernetes-2/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
+                    .unwrap(),
                 Some("0.1.2"),
             )
             .await
@@ -873,11 +840,10 @@ mod stack_tests {
 
             env_common::publish_provider(
                 &handler,
-                &current_dir
+                current_dir
                     .join("providers/aws-5-us-east-1/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
+                    .unwrap(),
                 Some("0.1.2"),
             )
             .await
@@ -885,12 +851,11 @@ mod stack_tests {
 
             env_common::publish_module(
                 &handler,
-                &current_dir
+                current_dir
                     .join("modules/eks/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
-                &"dev".to_string(),
+                    .unwrap(),
+                "dev",
                 Some("0.5.5-dev+test.1"),
                 None,
             )
@@ -899,12 +864,11 @@ mod stack_tests {
 
             env_common::publish_module(
                 &handler,
-                &current_dir
+                current_dir
                     .join("modules/nginx-ingress/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
-                &"dev".to_string(),
+                    .unwrap(),
+                "dev",
                 Some("0.5.5-dev+test.1"),
                 None,
             )
@@ -913,12 +877,11 @@ mod stack_tests {
 
             env_common::publish_module(
                 &handler,
-                &current_dir
+                current_dir
                     .join("modules/webapp/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
-                &"dev".to_string(),
+                    .unwrap(),
+                "dev",
                 Some("0.5.5-dev+test.1"),
                 None,
             )
@@ -927,12 +890,11 @@ mod stack_tests {
 
             env_common::publish_module(
                 &handler,
-                &current_dir
+                current_dir
                     .join("modules/s3bucket-with-backup/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
-                &"dev".to_string(),
+                    .unwrap(),
+                "dev",
                 Some("0.5.5-dev+test.1"),
                 None,
             )
@@ -941,12 +903,11 @@ mod stack_tests {
 
             env_common::publish_stack(
                 &handler,
-                &current_dir
+                current_dir
                     .join("stacks/webapp-example/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
-                &"dev".to_string(),
+                    .unwrap(),
+                "dev",
                 Some("0.1.4-dev+test.10"),
                 None,
             )
@@ -1024,7 +985,7 @@ mod stack_tests {
                     "Missing depends_on"
                 );
             } else {
-                assert!(false, "depens_on isn't an array")
+                panic!("depens_on isn't an array")
             };
         })
         .await;
@@ -1039,11 +1000,10 @@ mod stack_tests {
 
             env_common::publish_provider(
                 &handler,
-                &current_dir
+                current_dir
                     .join("providers/aws-5/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
+                    .unwrap(),
                 Some("0.1.2"),
             )
             .await
@@ -1051,11 +1011,10 @@ mod stack_tests {
 
             env_common::publish_provider(
                 &handler,
-                &current_dir
+                current_dir
                     .join("providers/helm-3/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
+                    .unwrap(),
                 Some("0.1.2"),
             )
             .await
@@ -1063,11 +1022,10 @@ mod stack_tests {
 
             env_common::publish_provider(
                 &handler,
-                &current_dir
+                current_dir
                     .join("providers/kubernetes-2/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
+                    .unwrap(),
                 Some("0.1.2"),
             )
             .await
@@ -1075,11 +1033,10 @@ mod stack_tests {
 
             env_common::publish_provider(
                 &handler,
-                &current_dir
+                current_dir
                     .join("providers/aws-5-us-east-1/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
+                    .unwrap(),
                 Some("0.1.2"),
             )
             .await
@@ -1087,12 +1044,11 @@ mod stack_tests {
 
             env_common::publish_module(
                 &handler,
-                &current_dir
+                current_dir
                     .join("modules/eks/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
-                &"dev".to_string(),
+                    .unwrap(),
+                "dev",
                 Some("0.5.5-dev+test.1"),
                 None,
             )
@@ -1101,12 +1057,11 @@ mod stack_tests {
 
             env_common::publish_module(
                 &handler,
-                &current_dir
+                current_dir
                     .join("modules/nginx-ingress/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
-                &"dev".to_string(),
+                    .unwrap(),
+                "dev",
                 Some("0.5.5-dev+test.1"),
                 None,
             )
@@ -1115,12 +1070,11 @@ mod stack_tests {
 
             env_common::publish_module(
                 &handler,
-                &current_dir
+                current_dir
                     .join("modules/webapp/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
-                &"dev".to_string(),
+                    .unwrap(),
+                "dev",
                 Some("0.5.5-dev+test.1"),
                 None,
             )
@@ -1129,12 +1083,11 @@ mod stack_tests {
 
             env_common::publish_module(
                 &handler,
-                &current_dir
+                current_dir
                     .join("modules/s3bucket-with-backup/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
-                &"dev".to_string(),
+                    .unwrap(),
+                "dev",
                 Some("0.5.5-dev+test.1"),
                 None,
             )
@@ -1143,12 +1096,11 @@ mod stack_tests {
 
             env_common::publish_stack(
                 &handler,
-                &current_dir
+                current_dir
                     .join("stacks/webapp-example-manual/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
-                &"dev".to_string(),
+                    .unwrap(),
+                "dev",
                 Some("0.1.4-dev+test.10"),
                 None,
             )
@@ -1234,7 +1186,7 @@ mod stack_tests {
                     "eks missing in depends_on"
                 );
             } else {
-                assert!(false, "depens_on isn't an array")
+                panic!("depens_on isn't an array")
             };
 
             //variables.tf override
@@ -1294,11 +1246,10 @@ mod stack_tests {
             // Publish provider
             env_common::publish_provider(
                 &handler,
-                &current_dir
+                current_dir
                     .join("providers/aws-5/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
+                    .unwrap(),
                 Some("0.1.2"),
             )
             .await
@@ -1307,12 +1258,11 @@ mod stack_tests {
             // Publish S3Bucket module for s3bucket
             env_common::publish_module(
                 &handler,
-                &current_dir
+                current_dir
                     .join("modules/s3bucket-dev/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
-                &"dev".to_string(),
+                    .unwrap(),
+                "dev",
                 Some("0.1.2-dev+test.10"),
                 None,
             )
@@ -1322,12 +1272,11 @@ mod stack_tests {
             // Publish IAMRole module for iamrole
             env_common::publish_module(
                 &handler,
-                &current_dir
+                current_dir
                     .join("modules/iam-role-with-policy/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
-                &"dev".to_string(),
+                    .unwrap(),
+                "dev",
                 Some("0.1.0-dev+test.1"),
                 None,
             )
@@ -1337,12 +1286,11 @@ mod stack_tests {
             // Publish the stack
             env_common::publish_stack(
                 &handler,
-                &current_dir
+                current_dir
                     .join("stacks/bucket-with-policy-reference/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
-                &"dev".to_string(),
+                    .unwrap(),
+                "dev",
                 Some("0.1.0-dev+test.1"),
                 None,
             )
@@ -1434,11 +1382,10 @@ mod stack_tests {
 
             env_common::publish_provider(
                 &handler,
-                &current_dir
+                current_dir
                     .join("providers/aws-5/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
+                    .unwrap(),
                 Some("0.1.2"),
             )
             .await
@@ -1446,12 +1393,11 @@ mod stack_tests {
 
             env_common::publish_module(
                 &handler,
-                &current_dir
+                current_dir
                     .join("modules/s3bucket-dev/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
-                &"dev".to_string(),
+                    .unwrap(),
+                "dev",
                 Some("0.1.2-dev+test.10"),
                 None,
             )
@@ -1460,12 +1406,11 @@ mod stack_tests {
 
             env_common::publish_module(
                 &handler,
-                &current_dir
+                current_dir
                     .join("modules/s3bucket-dev/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
-                &"dev".to_string(),
+                    .unwrap(),
+                "dev",
                 Some("0.1.3-dev+test.10"),
                 None,
             )
@@ -1474,12 +1419,11 @@ mod stack_tests {
 
             env_common::publish_stack(
                 &handler,
-                &current_dir
+                current_dir
                     .join("stacks/bucketcollection-stack-vars/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
-                &"dev".to_string(),
+                    .unwrap(),
+                "dev",
                 Some("0.1.0-dev+test.1"),
                 None,
             )

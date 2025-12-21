@@ -363,15 +363,13 @@ spec:
         let mut found_active = false;
         let mut found_deleted = false;
         for group in groups {
-            if let Some((active_file, _yaml)) = group.active {
-                if group.key.name == "minimal2" && active_file.path == "new.yaml" {
-                    found_active = true;
-                }
+            if let Some((active_file, _yaml)) = group.active
+                && group.key.name == "minimal2" && active_file.path == "new.yaml" {
+                found_active = true;
             }
-            if let Some((deleted_file, _yaml)) = group.deleted {
-                if group.key.name == "minimal1" && deleted_file.path == "old.yaml" {
-                    found_deleted = true;
-                }
+            if let Some((deleted_file, _yaml)) = group.deleted
+                && group.key.name == "minimal1" && deleted_file.path == "old.yaml" {
+                found_deleted = true;
             }
         }
         assert!(found_active, "Expected active group for minimal2 not found");
@@ -792,15 +790,13 @@ spec:
         let mut active_found = false;
         let mut deleted_found = false;
         for group in groups {
-            if let Some((active, _)) = group.active {
-                if group.key.name == "minimal3" && active.path == "another-claim4.yaml" {
-                    active_found = true;
-                }
+            if let Some((active, _)) = group.active
+                && group.key.name == "minimal3" && active.path == "another-claim4.yaml" {
+                active_found = true;
             }
-            if let Some((deleted, _)) = group.deleted {
-                if group.key.name == "minimal2" && deleted.path == "another-claim4.yaml" {
-                    deleted_found = true;
-                }
+            if let Some((deleted, _)) = group.deleted
+                && group.key.name == "minimal2" && deleted.path == "another-claim4.yaml" {
+                deleted_found = true;
             }
         }
         assert!(active_found, "Expected active group for minimal3 not found");

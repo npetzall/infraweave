@@ -173,7 +173,7 @@ pub fn group_terraform_items<T>(
 
         grouped
             .entry(module_name)
-            .or_insert_with(Vec::new)
+            .or_default()
             .push(item);
     }
 
@@ -229,10 +229,9 @@ pub fn is_variable_required(var: &env_defs::TfVariable) -> bool {
 pub fn build_stack_nav_items(stack: &env_defs::ModuleResp) -> Vec<NavItem> {
     let mut items = vec![NavItem::General];
 
-    if let Some(stack_data) = &stack.stack_data {
-        if !stack_data.modules.is_empty() {
-            items.push(NavItem::Composition);
-        }
+    if let Some(stack_data) = &stack.stack_data
+        && !stack_data.modules.is_empty() {
+        items.push(NavItem::Composition);
     }
 
     if !stack.tf_variables.is_empty() {
@@ -324,20 +323,16 @@ pub fn build_module_nav_items(module: &env_defs::ModuleResp) -> Vec<NavItem> {
 pub fn build_deployment_nav_items(deployment: &env_defs::DeploymentResp) -> Vec<NavItem> {
     let mut items = vec![NavItem::General];
 
-    if !deployment.variables.is_null() && deployment.variables.is_object() {
-        if let Some(obj) = deployment.variables.as_object() {
-            if !obj.is_empty() {
-                items.push(NavItem::VariablesHeader);
-            }
-        }
+    if !deployment.variables.is_null() && deployment.variables.is_object()
+        && let Some(obj) = deployment.variables.as_object()
+        && !obj.is_empty() {
+        items.push(NavItem::VariablesHeader);
     }
 
-    if !deployment.output.is_null() && deployment.output.is_object() {
-        if let Some(obj) = deployment.output.as_object() {
-            if !obj.is_empty() {
-                items.push(NavItem::OutputsHeader);
-            }
-        }
+    if !deployment.output.is_null() && deployment.output.is_object()
+        && let Some(obj) = deployment.output.as_object()
+        && !obj.is_empty() {
+        items.push(NavItem::OutputsHeader);
     }
 
     if !deployment.dependencies.is_empty() {

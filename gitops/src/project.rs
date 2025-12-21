@@ -48,8 +48,9 @@ mod tests {
 
     #[tokio::test]
     async fn test_get_project_id_for_repository_path() {
-        env::set_var(
-            "PROJECT_MAP",
+        unsafe {
+            env::set_var(
+                "PROJECT_MAP",
             r#"{
             "SomeGroup/path123/*": {
                 "project_id": "111111111"
@@ -64,7 +65,8 @@ mod tests {
                 "project_id": "444444444"
             }
         }"#,
-        );
+            );
+        }
 
         assert_eq!(
             get_project_id_for_repository_path("SomeGroup/path123/project123")

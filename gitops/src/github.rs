@@ -159,53 +159,53 @@ fn detect_artifact_type_and_tag_from_webhook(
     }
 
     // Check container metadata if available
-    if let Some(package) = package_info {
-        if let Some(container_metadata) = &package.package_version.container_metadata {
-            // Check tags array
-            if let Some(tags) = &container_metadata.tags {
-                if let Some(tag) = tags.iter().next() {
-                    if tag.ends_with(".att") || tag.contains("attestation") {
-                        println!(
-                            "📋 Detected attestation artifact based on container metadata tag: {}",
-                            tag
-                        );
-                        return (ArtifactType::Attestation, tag.clone());
-                    }
-                    if tag.ends_with(".sig") || tag.contains("signature") {
-                        println!(
-                            "✍️ Detected signature artifact based on container metadata tag: {}",
-                            tag
-                        );
-                        return (ArtifactType::Signature, tag.clone());
-                    }
-                    println!("📦 Detected main package artifact with tag: {}", tag);
-                    return (ArtifactType::MainPackage, tag.clone());
-                }
-            }
-
-            // Check single tag object
-            if let Some(tag_obj) = &container_metadata.tag {
-                let tag_name = &tag_obj.name;
-                if tag_name.ends_with(".att") || tag_name.contains("attestation") {
-                    println!(
-                        "📋 Detected attestation artifact based on container metadata tag.name: {}",
-                        tag_name
-                    );
-                    return (ArtifactType::Attestation, tag_name.clone());
-                }
-                if tag_name.ends_with(".sig") || tag_name.contains("signature") {
-                    println!(
-                        "✍️ Detected signature artifact based on container metadata tag.name: {}",
-                        tag_name
-                    );
-                    return (ArtifactType::Signature, tag_name.clone());
-                }
+    if let Some(package) = package_info
+        && let Some(container_metadata) = &package.package_version.container_metadata
+    {
+        // Check tags array
+        if let Some(tags) = &container_metadata.tags
+            && let Some(tag) = tags.iter().next()
+        {
+            if tag.ends_with(".att") || tag.contains("attestation") {
                 println!(
-                    "📦 Detected main package artifact with tag.name: {}",
+                    "📋 Detected attestation artifact based on container metadata tag: {}",
+                    tag
+                );
+                return (ArtifactType::Attestation, tag.clone());
+            }
+            if tag.ends_with(".sig") || tag.contains("signature") {
+                println!(
+                    "✍️ Detected signature artifact based on container metadata tag: {}",
+                    tag
+                );
+                return (ArtifactType::Signature, tag.clone());
+            }
+            println!("📦 Detected main package artifact with tag: {}", tag);
+            return (ArtifactType::MainPackage, tag.clone());
+        }
+
+        // Check single tag object
+        if let Some(tag_obj) = &container_metadata.tag {
+            let tag_name = &tag_obj.name;
+            if tag_name.ends_with(".att") || tag_name.contains("attestation") {
+                println!(
+                    "📋 Detected attestation artifact based on container metadata tag.name: {}",
                     tag_name
                 );
-                return (ArtifactType::MainPackage, tag_name.clone());
+                return (ArtifactType::Attestation, tag_name.clone());
             }
+            if tag_name.ends_with(".sig") || tag_name.contains("signature") {
+                println!(
+                    "✍️ Detected signature artifact based on container metadata tag.name: {}",
+                    tag_name
+                );
+                return (ArtifactType::Signature, tag_name.clone());
+            }
+            println!(
+                "📦 Detected main package artifact with tag.name: {}",
+                tag_name
+            );
+            return (ArtifactType::MainPackage, tag_name.clone());
         }
     }
 
@@ -1311,23 +1311,22 @@ fn extract_container_metadata_from_version(
     version: &PackageVersion,
 ) -> Option<GitHubContainerMetadata> {
     // Try to extract tags from metadata if it's structured container metadata
-    if let Some(container_data) = version.metadata.get("container") {
-        if let Some(tags_array) = container_data.get("tags") {
-            if let Some(tags) = tags_array.as_array() {
-                let tag_strings: Vec<String> = tags
-                    .iter()
-                    .filter_map(|tag| tag.as_str().map(|s| s.to_string()))
-                    .collect();
+    if let Some(container_data) = version.metadata.get("container")
+        && let Some(tags_array) = container_data.get("tags")
+        && let Some(tags) = tags_array.as_array()
+    {
+        let tag_strings: Vec<String> = tags
+            .iter()
+            .filter_map(|tag| tag.as_str().map(|s| s.to_string()))
+            .collect();
 
-                if !tag_strings.is_empty() {
-                    return Some(GitHubContainerMetadata {
-                        tags: Some(tag_strings.clone()),
-                        tag: tag_strings.first().map(|tag_name| GitHubTag {
-                            name: tag_name.clone(),
-                        }),
-                    });
-                }
-            }
+        if !tag_strings.is_empty() {
+            return Some(GitHubContainerMetadata {
+                tags: Some(tag_strings.clone()),
+                tag: tag_strings.first().map(|tag_name| GitHubTag {
+                    name: tag_name.clone(),
+                }),
+            });
         }
     }
 
@@ -1499,7 +1498,7 @@ pub async fn handle_package_publish_event(event: &Value) -> Result<Value, anyhow
                 let (digest, tag) = env_utils::save_oci_artifacts_separate(
                     &oci_package_url,
                     &token,
-                    &artifact_type_it,
+                    artifact_type_it,
                 )
                 .await?;
                 println!("✓ OCI artifacts saved successfully:");
@@ -1614,7 +1613,7 @@ async fn process_main_package_artifact(
             tag_main: tag,
             tag_attestation: Some(format!("{}.att", &digest.replace(':', "-"))),
             tag_signature: Some(format!("{}.sig", &digest.replace(':', "-"))),
-            digest: digest,
+            digest,
         }),
         None,
     )
@@ -1809,7 +1808,7 @@ async fn inform_missing_project_configuration(
     name: &str,
     private_key_pem: &str,
 ) {
-    if let ExtraData::GitHub(ref mut github_check_run) = extra_data {
+    if let ExtraData::GitHub(github_check_run) = extra_data {
         github_check_run.check_run.name = name.to_string();
         github_check_run.check_run.status = "completed".to_string();
         github_check_run.check_run.conclusion = Some("failure".to_string());

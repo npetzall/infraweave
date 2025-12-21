@@ -119,6 +119,7 @@ impl TfProviderMgmt {
                             }
                             if let Some(new_expr) = map.get(&configured_aliases_key) {
                                 if let Some(curr_expr) = m.get_mut(&configured_aliases_key) {
+                                    #[allow(clippy::collapsible_if)]
                                     if let Expression::Array(arr) = curr_expr {
                                         if let Expression::Array(new_arr) = new_expr {
                                             arr.extend(new_arr.iter().cloned());

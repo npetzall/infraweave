@@ -8,13 +8,15 @@ use axum::{
 use base64::{engine::general_purpose, Engine as _};
 use jsonwebtoken::{decode, decode_header, Algorithm, DecodingKey, Validation};
 use log::{debug, error, warn};
-use reqwest;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::sync::OnceLock;
 
 // Process-isolated token storage - only accessible within this process
 static INTERNAL_TOKEN: OnceLock<String> = OnceLock::new();
+
+// Thread-safe flag for disabling JWT auth (set at startup, before threads are spawned)
+static DISABLE_JWT_AUTH: OnceLock<bool> = OnceLock::new();
 
 /// Set the internal token for MCP authentication (call once at startup)
 #[allow(dead_code)]
@@ -27,6 +29,27 @@ pub fn set_internal_token(token: String) {
 /// Get the internal token if set
 pub fn get_internal_token() -> Option<&'static str> {
     INTERNAL_TOKEN.get().map(|s| s.as_str())
+}
+
+/// Set the disable JWT auth flag (call once at startup)
+#[allow(dead_code)] // Used by server.rs in the same crate
+pub fn set_disable_jwt_auth(disable: bool) {
+    DISABLE_JWT_AUTH
+        .set(disable)
+        .expect("Disable JWT auth flag already set");
+}
+
+/// Check if JWT auth is disabled (checks both static flag and env var for backward compatibility)
+fn is_jwt_auth_disabled() -> bool {
+    // Check static flag first (set at startup)
+    if let Some(&disabled) = DISABLE_JWT_AUTH.get() {
+        return disabled;
+    }
+    // Fallback to environment variable for backward compatibility
+    std::env::var("DISABLE_JWT_AUTH_INSECURE")
+        .unwrap_or_default()
+        .to_lowercase()
+        == "true"
 }
 
 /// JWT Claims structure with generic support for any claim
@@ -76,10 +99,7 @@ pub fn validate_auth_config() -> Vec<String> {
     let mut warnings = Vec::new();
 
     // Check JWT verification settings
-    let disable_jwt_auth = std::env::var("DISABLE_JWT_AUTH_INSECURE")
-        .unwrap_or_default()
-        .to_lowercase()
-        == "true";
+    let disable_jwt_auth = is_jwt_auth_disabled();
     if disable_jwt_auth {
         warnings.push(
             "JWT authentication COMPLETELY DISABLED - INSECURE! Only use in development!"
@@ -92,14 +112,12 @@ pub fn validate_auth_config() -> Vec<String> {
 
         if !has_jwks && !has_issuer && !has_static_key {
             warnings.push("JWT verification enabled but no verification method configured. Set one of: JWT_SIGNING_KEY (for HMAC), JWKS_URL (for RSA), or JWT_ISSUER (auto-derives JWKS URL)".to_string());
-        } else {
-            if has_static_key {
-                warnings.push("Using static JWT signing key (HMAC-SHA256)".to_string());
-            } else if has_jwks {
-                warnings.push("Using JWKS endpoint for JWT verification".to_string());
-            } else if has_issuer {
-                warnings.push("Using JWT issuer to auto-derive JWKS endpoint".to_string());
-            }
+        } else if has_static_key {
+            warnings.push("Using static JWT signing key (HMAC-SHA256)".to_string());
+        } else if has_jwks {
+            warnings.push("Using JWKS endpoint for JWT verification".to_string());
+        } else if has_issuer {
+            warnings.push("Using JWT issuer to auto-derive JWKS endpoint".to_string());
         }
     }
 
@@ -152,7 +170,7 @@ async fn extract_and_validate_jwt(auth_header: &str) -> Result<Claims, String> {
         // Configure audience - required even in development mode
         let expected_aud =
             std::env::var("JWT_AUDIENCE").unwrap_or_else(|_| "infraweave-api".to_string());
-        validation.set_audience(&[expected_aud.clone()]);
+        validation.set_audience(std::slice::from_ref(&expected_aud));
         debug!(
             "JWT audience validation enabled for: {} (dev mode)",
             expected_aud
@@ -203,7 +221,7 @@ fn verify_with_static_key(token: &str, key: &str) -> Result<Claims, String> {
 
     // Configure issuer validation only if explicitly set
     if let Ok(expected_iss) = std::env::var("JWT_ISSUER") {
-        validation.set_issuer(&[expected_iss.clone()]);
+        validation.set_issuer(std::slice::from_ref(&expected_iss));
         debug!("JWT issuer validation enabled for: {}", expected_iss);
     } else {
         debug!("JWT issuer validation disabled - JWT_ISSUER not set");
@@ -299,7 +317,7 @@ async fn verify_with_jwks(token: &str, jwks_url: &str) -> Result<Claims, String>
 
     // Configure issuer validation only if explicitly set
     if let Ok(expected_iss) = std::env::var("JWT_ISSUER") {
-        validation.set_issuer(&[expected_iss.clone()]);
+        validation.set_issuer(std::slice::from_ref(&expected_iss));
         debug!("JWT issuer validation enabled for: {}", expected_iss);
     } else {
         debug!("JWT issuer validation disabled - JWT_ISSUER not set");
@@ -354,18 +372,18 @@ async fn fetch_jwks(url: &str) -> Result<Jwks, Box<dyn std::error::Error + Send 
 /// Convert JWK to jsonwebtoken's DecodingKey
 fn convert_jwk_to_decoding_key(key: &JwksKey) -> Result<DecodingKey, String> {
     // For RSA keys, we need the x5c (certificate) or n/e (modulus/exponent)
-    if let Some(x5c) = &key.x5c {
-        if let Some(cert) = x5c.first() {
-            // Decode base64 certificate
-            let cert_der = general_purpose::STANDARD
-                .decode(cert)
-                .map_err(|e| format!("Failed to decode certificate: {}", e))?;
+    if let Some(x5c) = &key.x5c
+        && let Some(cert) = x5c.first()
+    {
+        // Decode base64 certificate
+        let cert_der = general_purpose::STANDARD
+            .decode(cert)
+            .map_err(|e| format!("Failed to decode certificate: {}", e))?;
 
-            // Create decoding key from certificate
-            // Note: from_rsa_der returns DecodingKey directly, not a Result in jsonwebtoken 9.0
-            let decoding_key = DecodingKey::from_rsa_der(&cert_der);
-            return Ok(decoding_key);
-        }
+        // Create decoding key from certificate
+        // Note: from_rsa_der returns DecodingKey directly, not a Result in jsonwebtoken 9.0
+        let decoding_key = DecodingKey::from_rsa_der(&cert_der);
+        return Ok(decoding_key);
     }
 
     // Alternative: use n and e for RSA
@@ -388,10 +406,10 @@ fn get_user_identifier(claims: &Claims) -> Option<String> {
 
     // Check custom claims for other common user identifiers
     for key in &["oid", "user_id", "username", "email", "upn", "appid"] {
-        if let Some(value) = claims.custom.get(*key) {
-            if let Some(user_id) = value.as_str() {
-                return Some(user_id.to_string());
-            }
+        if let Some(value) = claims.custom.get(*key)
+            && let Some(user_id) = value.as_str()
+        {
+            return Some(user_id.to_string());
         }
     }
 
@@ -473,10 +491,7 @@ pub async fn project_access_middleware(
     }
 
     // Check if JWT authentication is completely disabled (INSECURE!)
-    let disable_jwt_auth = std::env::var("DISABLE_JWT_AUTH_INSECURE")
-        .unwrap_or_default()
-        .to_lowercase()
-        == "true";
+    let disable_jwt_auth = is_jwt_auth_disabled();
 
     if disable_jwt_auth {
         warn!("JWT authentication middleware bypassed - INSECURE! Only use in development!");
@@ -649,29 +664,29 @@ mod tests {
         // Direct match
         assert!(validate_project_access(
             "project123",
-            &vec!["project123".to_string()]
+            &["project123".to_string()]
         ));
 
         // No prefix matching - exact match only
         assert!(!validate_project_access(
             "project123-dev",
-            &vec!["project123".to_string()]
+            &["project123".to_string()]
         ));
 
         // Multiple accessible projects
         assert!(validate_project_access(
             "project456",
-            &vec!["project123".to_string(), "project456".to_string()]
+            &["project123".to_string(), "project456".to_string()]
         ));
 
         // No match
         assert!(!validate_project_access(
             "project123",
-            &vec!["project456".to_string()]
+            &["project456".to_string()]
         ));
 
         // Empty access list
-        assert!(!validate_project_access("project123", &vec![]));
+        assert!(!validate_project_access("project123", &[]));
     }
 
     #[test]
@@ -708,10 +723,12 @@ mod tests {
         use std::collections::HashMap;
 
         // Set up test environment variables
-        std::env::set_var("JWT_PROJECT_CLAIM_KEY", "projects");
-        std::env::set_var("DISABLE_JWT_AUTH_INSECURE", "true"); // Disable auth for test
-        std::env::remove_var("JWT_AUDIENCE"); // Remove audience validation
-        std::env::remove_var("JWT_ISSUER"); // Remove issuer validation
+        unsafe {
+            std::env::set_var("JWT_PROJECT_CLAIM_KEY", "projects");
+            std::env::set_var("DISABLE_JWT_AUTH_INSECURE", "true"); // Disable auth for test
+            std::env::remove_var("JWT_AUDIENCE"); // Remove audience validation
+            std::env::remove_var("JWT_ISSUER"); // Remove issuer validation
+        }
 
         // Create test JWT claims
         let mut custom_claims = HashMap::new();
@@ -762,8 +779,10 @@ mod tests {
         ));
 
         // Clean up environment
-        std::env::remove_var("JWT_PROJECT_CLAIM_KEY");
-        std::env::remove_var("DISABLE_JWT_AUTH_INSECURE");
+        unsafe {
+            std::env::remove_var("JWT_PROJECT_CLAIM_KEY");
+            std::env::remove_var("DISABLE_JWT_AUTH_INSECURE");
+        }
     }
 
     #[test]

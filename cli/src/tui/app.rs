@@ -172,8 +172,8 @@ pub struct App {
     pub change_records: std::collections::HashMap<String, env_defs::InfraChangeRecord>,
 }
 
-impl App {
-    pub fn new() -> Self {
+impl Default for App {
+    fn default() -> Self {
         // Initialize state modules
         let view_state = ViewState::new();
         let detail_state = DetailState::new();
@@ -274,6 +274,12 @@ impl App {
             events_log_view: EventsLogView::Events,
             change_records: std::collections::HashMap::new(),
         }
+    }
+}
+
+impl App {
+    pub fn new() -> Self {
+        Self::default()
     }
 
     pub fn set_background_sender(
@@ -1273,7 +1279,7 @@ impl App {
                 let preferred_order = ["stable", "rc", "beta", "alpha", "dev"];
                 let first_track = preferred_order
                     .iter()
-                    .find(|&&track| module_tracks.contains(&track.to_string()))
+                    .find(|&&track| module_tracks.iter().any(|t| t == track))
                     .map(|&s| s.to_string())
                     .unwrap_or_else(|| {
                         module_tracks
@@ -1348,7 +1354,7 @@ impl App {
                 let preferred_order = ["stable", "rc", "beta", "alpha", "dev"];
                 let first_track = preferred_order
                     .iter()
-                    .find(|&&track| stack_tracks.contains(&track.to_string()))
+                    .find(|&&track| stack_tracks.iter().any(|t| t == track))
                     .map(|&s| s.to_string())
                     .unwrap_or_else(|| {
                         stack_tracks
@@ -1556,21 +1562,17 @@ impl App {
             let mut idx = 1; // Start after General
 
             // Variables section
-            if !deployment.variables.is_null() && deployment.variables.is_object() {
-                if let Some(obj) = deployment.variables.as_object() {
-                    if !obj.is_empty() {
-                        idx += 1;
-                    }
-                }
+            if !deployment.variables.is_null() && deployment.variables.is_object()
+                && let Some(obj) = deployment.variables.as_object()
+                && !obj.is_empty() {
+                idx += 1;
             }
 
             // Outputs section
-            if !deployment.output.is_null() && deployment.output.is_object() {
-                if let Some(obj) = deployment.output.as_object() {
-                    if !obj.is_empty() {
-                        idx += 1;
-                    }
-                }
+            if !deployment.output.is_null() && deployment.output.is_object()
+                && let Some(obj) = deployment.output.as_object()
+                && !obj.is_empty() {
+                idx += 1;
             }
 
             // Dependencies section
@@ -1827,7 +1829,7 @@ impl App {
 
         for event in &self.events_data {
             jobs.entry(event.job_id.clone())
-                .or_insert_with(Vec::new)
+                .or_default()
                 .push(event);
         }
 
@@ -1984,13 +1986,12 @@ impl App {
     }
 
     pub fn check_track_switch_timeout(&mut self) {
-        if let Some(switch_time) = self.last_track_switch {
-            if switch_time.elapsed() >= std::time::Duration::from_secs(1) {
-                // It's been 1 second since the last track switch, trigger reload
-                self.last_track_switch = None;
-                if matches!(self.current_view, View::Modules) && !self.is_loading {
-                    self.schedule_action(PendingAction::LoadModules);
-                }
+        if let Some(switch_time) = self.last_track_switch
+            && switch_time.elapsed() >= std::time::Duration::from_secs(1) {
+            // It's been 1 second since the last track switch, trigger reload
+            self.last_track_switch = None;
+            if matches!(self.current_view, View::Modules) && !self.is_loading {
+                self.schedule_action(PendingAction::LoadModules);
             }
         }
     }

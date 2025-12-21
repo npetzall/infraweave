@@ -166,20 +166,16 @@ impl DetailState {
         if let Some(deployment) = &self.detail_deployment {
             let mut idx = 1;
 
-            if !deployment.variables.is_null() && deployment.variables.is_object() {
-                if let Some(obj) = deployment.variables.as_object() {
-                    if !obj.is_empty() {
-                        idx += 1;
-                    }
-                }
+            if !deployment.variables.is_null() && deployment.variables.is_object()
+                && let Some(obj) = deployment.variables.as_object()
+                && !obj.is_empty() {
+                idx += 1;
             }
 
-            if !deployment.output.is_null() && deployment.output.is_object() {
-                if let Some(obj) = deployment.output.as_object() {
-                    if !obj.is_empty() {
-                        idx += 1;
-                    }
-                }
+            if !deployment.output.is_null() && deployment.output.is_object()
+                && let Some(obj) = deployment.output.as_object()
+                && !obj.is_empty() {
+                idx += 1;
             }
 
             if !deployment.dependencies.is_empty() {

@@ -224,15 +224,14 @@ async fn create_authenticated_client(
         );
     } else {
         // Generic registry - try without auth first, add auth headers if available
-        if let Ok(username) = std::env::var("REGISTRY_USERNAME") {
-            if let Ok(password) = std::env::var("REGISTRY_PASSWORD") {
-                let basic = base64::engine::general_purpose::STANDARD
-                    .encode(format!("{}:{}", username, password));
-                def_headers.insert(
-                    header::AUTHORIZATION,
-                    format!("Basic {}", basic).parse().unwrap(),
-                );
-            }
+        if let Ok(username) = std::env::var("REGISTRY_USERNAME")
+            && let Ok(password) = std::env::var("REGISTRY_PASSWORD") {
+            let basic = base64::engine::general_purpose::STANDARD
+                .encode(format!("{}:{}", username, password));
+            def_headers.insert(
+                header::AUTHORIZATION,
+                format!("Basic {}", basic).parse().unwrap(),
+            );
         }
     }
 
@@ -472,8 +471,8 @@ async fn fetch_signature_blob(
 
         if let Some(layers) = manifest["layers"].as_array() {
             for layer in layers {
-                if let Some(media_type) = layer["mediaType"].as_str() {
-                    if media_type.contains("cosign") || media_type.contains("signature") {
+                if let Some(media_type) = layer["mediaType"].as_str()
+                    && (media_type.contains("cosign") || media_type.contains("signature")) {
                         let layer_digest = layer["digest"].as_str().unwrap();
                         let layer_size = layer["size"].as_u64().unwrap();
 
@@ -500,7 +499,6 @@ async fn fetch_signature_blob(
                             digest: layer_digest.to_owned(),
                             content: bytes.to_vec(),
                         }));
-                    }
                 }
             }
         }
@@ -665,15 +663,13 @@ fn verify_main_artifact_offline(artifact_path: &str, expected_digest: &str) -> R
             println!("✓ Found index.json");
 
             // Verify the manifest digest in index matches expected
-            if let Some(manifests) = index["manifests"].as_array() {
-                if let Some(manifest) = manifests.first() {
-                    if let Some(digest) = manifest["digest"].as_str() {
-                        if digest != expected_digest {
-                            anyhow::bail!("Manifest digest in index.json ({}) doesn't match expected digest ({})", digest, expected_digest);
-                        }
-                        println!("✓ Manifest digest in index.json matches expected digest");
-                    }
+            if let Some(manifests) = index["manifests"].as_array()
+                && let Some(manifest) = manifests.first()
+                && let Some(digest) = manifest["digest"].as_str() {
+                if digest != expected_digest {
+                    anyhow::bail!("Manifest digest in index.json ({}) doesn't match expected digest ({})", digest, expected_digest);
                 }
+                println!("✓ Manifest digest in index.json matches expected digest");
             }
         } else if path_str.starts_with("blobs/sha256/") && !path_str.ends_with('/') {
             let mut contents = Vec::new();
@@ -712,21 +708,20 @@ fn verify_main_artifact_offline(artifact_path: &str, expected_digest: &str) -> R
                 println!("✓ Manifest digest verified");
             } else {
                 // Check if this is the config blob (don't count as layer)
-                if let Some(ref config_hex) = config_digest {
-                    if filename == *config_hex {
-                        println!("✓ Found and verified config blob");
-                        // Verify config digest
-                        let computed_digest = sha2::Sha256::digest(&contents);
-                        let computed_hex = format!("{:x}", computed_digest);
-                        if computed_hex != filename {
-                            anyhow::bail!(
-                                "Config digest mismatch for {}: computed {}",
-                                filename,
-                                computed_hex
-                            );
-                        }
-                        continue; // Skip counting this as a layer
+                if let Some(ref config_hex) = config_digest
+                    && filename == *config_hex {
+                    println!("✓ Found and verified config blob");
+                    // Verify config digest
+                    let computed_digest = sha2::Sha256::digest(&contents);
+                    let computed_hex = format!("{:x}", computed_digest);
+                    if computed_hex != filename {
+                        anyhow::bail!(
+                            "Config digest mismatch for {}: computed {}",
+                            filename,
+                            computed_hex
+                        );
                     }
+                    continue; // Skip counting this as a layer
                 }
 
                 // This is a layer blob
@@ -864,20 +859,18 @@ fn verify_signature_offline(
             println!("✓ Signature is valid JSON");
 
             // Verify basic cosign signature structure
-            if let Some(critical) = signature_json.get("critical") {
-                if let Some(image) = critical.get("image") {
-                    if let Some(docker_manifest_digest) = image.get("docker-manifest-digest") {
-                        let sig_digest = docker_manifest_digest.as_str().unwrap_or("");
-                        if sig_digest.contains(subject_digest) {
-                            println!("✓ Signature references correct image digest");
-                        } else {
-                            anyhow::bail!(
-                                "Signature references incorrect image digest: {} vs {}",
-                                sig_digest,
-                                subject_digest
-                            );
-                        }
-                    }
+            if let Some(critical) = signature_json.get("critical")
+                && let Some(image) = critical.get("image")
+                && let Some(docker_manifest_digest) = image.get("docker-manifest-digest") {
+                let sig_digest = docker_manifest_digest.as_str().unwrap_or("");
+                if sig_digest.contains(subject_digest) {
+                    println!("✓ Signature references correct image digest");
+                } else {
+                    anyhow::bail!(
+                        "Signature references incorrect image digest: {} vs {}",
+                        sig_digest,
+                        subject_digest
+                    );
                 }
             }
         } else {
@@ -937,8 +930,8 @@ fn verify_slsa_provenance_attestation(blob: &Blob, subject_digest: &str) -> Resu
         // Check if the subject matches our image digest
         if let Some(subject) = payload["subject"].as_array() {
             for subj in subject {
-                if let Some(digest) = subj["digest"]["sha256"].as_str() {
-                    if digest == subject_digest {
+                if let Some(digest) = subj["digest"]["sha256"].as_str()
+                    && digest == subject_digest {
                         println!("✓ Subject digest matches: {}", digest);
 
                         // Additional verification: check the predicate type
@@ -979,7 +972,6 @@ fn verify_slsa_provenance_attestation(blob: &Blob, subject_digest: &str) -> Resu
                         } else {
                             anyhow::bail!("Missing predicateType in attestation");
                         }
-                    }
                 }
             }
             anyhow::bail!(
@@ -1072,17 +1064,15 @@ pub fn verify_with_policy(
         .map_err(|e| anyhow::anyhow!("Failed to evaluate policy: {}", e))?;
 
     // Check if the policy allows the attestation
-    if let Some(result) = results.result.first() {
-        if let Some(expressions) = result.expressions.first() {
-            if let regorus::Value::Bool(allowed) = &expressions.value {
-                if *allowed {
-                    println!("✓ Policy verification passed");
-                    return Ok(());
-                } else {
-                    println!("❌ Policy verification failed - main allow rule returned false");
-                    anyhow::bail!("Policy verification failed: all conditions must be met for verification to pass");
-                }
-            }
+    if let Some(result) = results.result.first()
+        && let Some(expressions) = result.expressions.first()
+        && let regorus::Value::Bool(allowed) = &expressions.value {
+        if *allowed {
+            println!("✓ Policy verification passed");
+            return Ok(());
+        } else {
+            println!("❌ Policy verification failed - main allow rule returned false");
+            anyhow::bail!("Policy verification failed: all conditions must be met for verification to pass");
         }
     }
 

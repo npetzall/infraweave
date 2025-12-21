@@ -15,7 +15,7 @@ pub fn get_variable_mapping(is_stack: bool, variables: &Value) -> Value {
                     let component_entry = acc
                         .entry(component.to_string())
                         .or_insert_with(|| serde_json::json!({}));
-                    if let serde_json::Value::Object(ref mut nested_map) = component_entry {
+                    if let serde_json::Value::Object(nested_map) = component_entry {
                         nested_map.insert(camel_property_key, v.clone());
                     }
                 } else {

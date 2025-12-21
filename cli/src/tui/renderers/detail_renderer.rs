@@ -281,17 +281,16 @@ fn format_json_value_nicely(value: &serde_json::Value, indent: usize) -> Vec<Lin
                 )));
                 for (i, item) in arr.iter().enumerate() {
                     let mut item_lines = format_json_value_nicely(item, indent + 1);
-                    if i < arr.len() - 1 {
-                        if let Some(last_line) = item_lines.last_mut() {
-                            // Add comma to last span of the line
-                            if let Some(span) = last_line.spans.last() {
-                                let text_with_comma = format!("{},", span.content);
-                                let new_span = Span::styled(text_with_comma, span.style);
-                                let mut new_spans: Vec<Span> =
-                                    last_line.spans[..last_line.spans.len() - 1].to_vec();
-                                new_spans.push(new_span);
-                                *last_line = Line::from(new_spans);
-                            }
+                    if i < arr.len() - 1
+                        && let Some(last_line) = item_lines.last_mut() {
+                        // Add comma to last span of the line
+                        if let Some(span) = last_line.spans.last() {
+                            let text_with_comma = format!("{},", span.content);
+                            let new_span = Span::styled(text_with_comma, span.style);
+                            let mut new_spans: Vec<Span> =
+                                last_line.spans[..last_line.spans.len() - 1].to_vec();
+                            new_spans.push(new_span);
+                            *last_line = Line::from(new_spans);
                         }
                     }
                     lines.extend(item_lines);
@@ -330,14 +329,13 @@ fn format_json_value_nicely(value: &serde_json::Value, indent: usize) -> Vec<Lin
                     let mut val_lines = format_json_value_nicely(val, indent + 2);
                     if !val_lines.is_empty() {
                         // Remove indent from first line since we already have the key
-                        if let Some(first_line) = val_lines.first_mut() {
-                            if let Some(first_span) = first_line.spans.first() {
-                                let trimmed = first_span.content.trim_start();
-                                let new_span = Span::styled(trimmed.to_string(), first_span.style);
-                                let mut new_spans = vec![new_span];
-                                new_spans.extend(first_line.spans[1..].to_vec());
-                                *first_line = Line::from(new_spans);
-                            }
+                        if let Some(first_line) = val_lines.first_mut()
+                            && let Some(first_span) = first_line.spans.first() {
+                            let trimmed = first_span.content.trim_start();
+                            let new_span = Span::styled(trimmed.to_string(), first_span.style);
+                            let mut new_spans = vec![new_span];
+                            new_spans.extend(first_line.spans[1..].to_vec());
+                            *first_line = Line::from(new_spans);
                         }
 
                         // Merge key line with first value line
@@ -616,42 +614,41 @@ fn build_deployment_detail_content(
         }
 
         // TF Resources subsection
-        if let Some(ref resources) = deployment.tf_resources {
-            if !resources.is_empty() {
-                lines.push(Line::from(Span::styled(
-                    "Terraform Resources",
+        if let Some(ref resources) = deployment.tf_resources
+            && !resources.is_empty() {
+            lines.push(Line::from(Span::styled(
+                "Terraform Resources",
+                Style::default()
+                    .fg(Color::Cyan)
+                    .add_modifier(Modifier::BOLD),
+            )));
+            lines.push(Line::from(Span::styled(
+                "─".repeat(40),
+                Style::default().fg(Color::DarkGray),
+            )));
+
+            lines.push(Line::from(vec![
+                Span::styled("Total: ", Style::default().fg(Color::DarkGray)),
+                Span::styled(
+                    resources.len().to_string(),
                     Style::default()
                         .fg(Color::Cyan)
                         .add_modifier(Modifier::BOLD),
-                )));
-                lines.push(Line::from(Span::styled(
-                    "─".repeat(40),
-                    Style::default().fg(Color::DarkGray),
-                )));
+                ),
+            ]));
+            lines.push(Line::from(""));
 
+            for (idx, resource) in resources.iter().enumerate() {
                 lines.push(Line::from(vec![
-                    Span::styled("Total: ", Style::default().fg(Color::DarkGray)),
                     Span::styled(
-                        resources.len().to_string(),
-                        Style::default()
-                            .fg(Color::Cyan)
-                            .add_modifier(Modifier::BOLD),
+                        format!("  {}. ", idx + 1),
+                        Style::default().fg(Color::DarkGray),
                     ),
+                    Span::styled(resource.clone(), Style::default().fg(Color::Green)),
                 ]));
-                lines.push(Line::from(""));
-
-                for (idx, resource) in resources.iter().enumerate() {
-                    lines.push(Line::from(vec![
-                        Span::styled(
-                            format!("  {}. ", idx + 1),
-                            Style::default().fg(Color::DarkGray),
-                        ),
-                        Span::styled(resource.clone(), Style::default().fg(Color::Green)),
-                    ]));
-                }
-
-                lines.push(Line::from(""));
             }
+
+            lines.push(Line::from(""));
         }
 
         return lines;
@@ -659,10 +656,10 @@ fn build_deployment_detail_content(
     current_idx += 1;
 
     // Variables section
-    if !deployment.variables.is_null() && deployment.variables.is_object() {
-        if let Some(obj) = deployment.variables.as_object() {
-            if !obj.is_empty() {
-                if app.detail_browser_index == current_idx {
+    if !deployment.variables.is_null() && deployment.variables.is_object()
+        && let Some(obj) = deployment.variables.as_object()
+        && !obj.is_empty() {
+        if app.detail_browser_index == current_idx {
                     for (key, value) in obj {
                         lines.push(Line::from(vec![
                             Span::styled("⚙ ", Style::default().fg(Color::Yellow)),
@@ -691,20 +688,18 @@ fn build_deployment_detail_content(
                                 }
 
                                 // Get sensitive flag
-                                if let Some(sensitive_val) = var_obj.get("sensitive") {
-                                    if let Some(is_sensitive) = sensitive_val.as_bool() {
-                                        if is_sensitive {
-                                            lines.push(Line::from(vec![
-                                                Span::raw("  "),
-                                                Span::styled(
-                                                    "🔒 SENSITIVE",
-                                                    Style::default()
-                                                        .fg(Color::Red)
-                                                        .add_modifier(Modifier::BOLD),
-                                                ),
-                                            ]));
-                                        }
-                                    }
+                                if let Some(sensitive_val) = var_obj.get("sensitive")
+                                    && let Some(is_sensitive) = sensitive_val.as_bool()
+                                    && is_sensitive {
+                                    lines.push(Line::from(vec![
+                                        Span::raw("  "),
+                                        Span::styled(
+                                            "🔒 SENSITIVE",
+                                            Style::default()
+                                                .fg(Color::Red)
+                                                .add_modifier(Modifier::BOLD),
+                                        ),
+                                    ]));
                                 }
 
                                 lines.push(Line::from(""));
@@ -780,16 +775,14 @@ fn build_deployment_detail_content(
 
                     return lines;
                 }
-                current_idx += 1;
-            }
+            current_idx += 1;
         }
-    }
 
     // Outputs section
-    if !deployment.output.is_null() && deployment.output.is_object() {
-        if let Some(obj) = deployment.output.as_object() {
-            if !obj.is_empty() {
-                if app.detail_browser_index == current_idx {
+    if !deployment.output.is_null() && deployment.output.is_object()
+        && let Some(obj) = deployment.output.as_object()
+        && !obj.is_empty() {
+        if app.detail_browser_index == current_idx {
                     for (key, value) in obj {
                         lines.push(Line::from(vec![
                             Span::styled("📦 ", Style::default().fg(Color::Cyan)),
@@ -816,20 +809,18 @@ fn build_deployment_detail_content(
                             }
 
                             // Get sensitive flag
-                            if let Some(sensitive_val) = output_obj.get("sensitive") {
-                                if let Some(is_sensitive) = sensitive_val.as_bool() {
-                                    if is_sensitive {
-                                        lines.push(Line::from(vec![
-                                            Span::raw("  "),
-                                            Span::styled(
-                                                "🔒 SENSITIVE",
-                                                Style::default()
-                                                    .fg(Color::Red)
-                                                    .add_modifier(Modifier::BOLD),
-                                            ),
-                                        ]));
-                                    }
-                                }
+                            if let Some(sensitive_val) = output_obj.get("sensitive")
+                                && let Some(is_sensitive) = sensitive_val.as_bool()
+                                && is_sensitive {
+                                lines.push(Line::from(vec![
+                                    Span::raw("  "),
+                                    Span::styled(
+                                        "🔒 SENSITIVE",
+                                        Style::default()
+                                            .fg(Color::Red)
+                                            .add_modifier(Modifier::BOLD),
+                                    ),
+                                ]));
                             }
 
                             lines.push(Line::from(""));
@@ -879,10 +870,8 @@ fn build_deployment_detail_content(
 
                     return lines;
                 }
-                current_idx += 1;
-            }
+            current_idx += 1;
         }
-    }
 
     // Dependencies section
     if !deployment.dependencies.is_empty() {

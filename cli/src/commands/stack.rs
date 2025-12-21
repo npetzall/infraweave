@@ -8,7 +8,7 @@ use crate::current_region_handler;
 use env_defs::CloudProvider;
 
 pub async fn handle_preview(path: &str) {
-    match get_stack_preview(&current_region_handler().await, &path.to_string()).await {
+    match get_stack_preview(&current_region_handler().await, path).await {
         Ok(stack_module) => {
             info!("Stack generated successfully");
             println!("{}", stack_module);
@@ -108,8 +108,8 @@ pub async fn handle_versions(stack: &str, track: &str) {
             }
 
             println!(
-                "{:<20} {:<15} {:<30} {}",
-                "Version", "Status", "Created", "Message"
+                "{:<20} {:<15} {:<30} Message",
+                "Version", "Status", "Created"
             );
             for entry in &versions {
                 let status = if entry.deprecated {

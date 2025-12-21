@@ -36,7 +36,7 @@ pub async fn handle_publish(
 }
 
 pub async fn handle_precheck(file: &str) {
-    match precheck_module(&file.to_string()).await {
+    match precheck_module(file).await {
         Ok(_) => {
             info!("Module prechecked successfully");
         }
@@ -107,8 +107,8 @@ pub async fn handle_versions(module: &str, track: &str) {
             }
 
             println!(
-                "{:<20} {:<15} {:<30} {}",
-                "Version", "Status", "Created", "Message"
+                "{:<20} {:<15} {:<30} Message",
+                "Version", "Status", "Created"
             );
             for entry in &versions {
                 let status = if entry.deprecated {

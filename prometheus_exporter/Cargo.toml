@@ -19,7 +19,7 @@ reqwest = { workspace = true }
 openssl = { workspace = true }
 lambda_runtime = "0.13.0"
 futures = { workspace = true }
-prometheus = "0.13"
+prometheus = "0.14"
 axum = { workspace = true }
 
 env_common = { path = "../env_common" }

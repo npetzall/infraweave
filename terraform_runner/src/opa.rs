@@ -147,22 +147,22 @@ pub async fn run_opa_policy_checks(
                 let mut failed: bool = false;
                 let mut policy_violations: Value = json!({});
                 for (opa_package_name, value) in opa_result.as_object().unwrap() {
-                    if let Some(violations) = value.get("deny") {
-                        if !violations.as_array().unwrap().is_empty() {
-                            failed = true;
-                            failed_policy_evaluation = true;
-                            policy_violations[opa_package_name] = violations.clone();
+                    if let Some(violations) = value.get("deny")
+                        && !violations.as_array().unwrap().is_empty()
+                    {
+                        failed = true;
+                        failed_policy_evaluation = true;
+                        policy_violations[opa_package_name] = violations.clone();
 
-                            // println!("Policy violations found for policy: {}", policy.policy);
-                            // println!("Violations: {}", violations);
-                            // println!("Current rego files for further information:");
-                            // cat_file("./tf_plan.json"); // BE CARFEFUL WITH THIS LINE, CAN EXPOSE SENSITIVE DATA
-                            // cat_file("./env_data.json");
-                            // cat_file("./policy_input.json");
-                            // for file in &rego_files {
-                            //     cat_file(file);
-                            // }
-                        }
+                        // println!("Policy violations found for policy: {}", policy.policy);
+                        // println!("Violations: {}", violations);
+                        // println!("Current rego files for further information:");
+                        // cat_file("./tf_plan.json"); // BE CARFEFUL WITH THIS LINE, CAN EXPOSE SENSITIVE DATA
+                        // cat_file("./env_data.json");
+                        // cat_file("./policy_input.json");
+                        // for file in &rego_files {
+                        //     cat_file(file);
+                        // }
                     }
                 }
                 policy_results.push(PolicyResult {

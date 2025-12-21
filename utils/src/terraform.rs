@@ -1,6 +1,6 @@
 use anyhow::{anyhow, Context, Result};
 use bollard::exec::StartExecResults;
-use bollard::image::CreateImageOptions;
+use bollard::query_parameters::CreateImageOptionsBuilder;
 use env_defs::{ApiInfraPayload, ExtraData, TfLockProvider};
 use log::warn;
 use serde::Deserialize;
@@ -74,7 +74,7 @@ pub async fn get_provider_url_key(
             let filename = registry_data
                 .shasums_url
                 .split('/')
-                .last()
+                .next_back()
                 .unwrap_or("SHA256SUMS")
                 .to_string();
             (registry_data.shasums_url, filename)
@@ -83,7 +83,7 @@ pub async fn get_provider_url_key(
             let filename = registry_data
                 .shasums_signature_url
                 .split('/')
-                .last()
+                .next_back()
                 .unwrap_or("SHA256SUMS.sig")
                 .to_string();
             (registry_data.shasums_signature_url, filename)
@@ -98,9 +98,8 @@ pub async fn get_provider_url_key(
     Ok((download_url, key))
 }
 
-use bollard::container::Config;
-use bollard::container::CreateContainerOptions;
-use bollard::container::StartContainerOptions;
+use bollard::models::ContainerCreateBody;
+use bollard::query_parameters::CreateContainerOptionsBuilder;
 use bollard::Docker;
 use futures_util::stream::StreamExt;
 
@@ -117,7 +116,7 @@ pub async fn run_terraform_provider_lock(temp_module_path: &Path) -> Result<Stri
             stop(&docker, &name).await?;
             return Err(e);
         }
-    };
+    }
 
     match exec_terraform(&docker, &id, &["validate"]).await {
         Ok(validate_out) => println!("Validate command output:\n{}", validate_out),
@@ -125,7 +124,7 @@ pub async fn run_terraform_provider_lock(temp_module_path: &Path) -> Result<Stri
             stop(&docker, &name).await?;
             return Err(e);
         }
-    };
+    }
 
     match exec(&docker, &id, "cat", &["/workspace/.terraform.lock.hcl"]).await {
         Ok(lockfile_content) => {
@@ -138,18 +137,22 @@ pub async fn run_terraform_provider_lock(temp_module_path: &Path) -> Result<Stri
         }
         Err(e) => {
             stop(&docker, &name).await?;
-            return Err(e);
+            Err(e)
         }
     }
 }
 
-async fn stop(docker: &Docker, name: &String) -> Result<(), anyhow::Error> {
-    let _ = docker.stop_container(&name, None).await?;
-    let _ = docker.remove_container(&name, None).await?;
+async fn stop(docker: &Docker, name: &str) -> Result<(), anyhow::Error> {
+    docker
+        .stop_container(name, None::<bollard::query_parameters::StopContainerOptions>)
+        .await?;
+    docker
+        .remove_container(name, None::<bollard::query_parameters::RemoveContainerOptions>)
+        .await?;
     Ok(())
 }
 
-use bollard::service::HostConfig;
+use bollard::models::HostConfig;
 
 async fn start_tf_container() -> anyhow::Result<(String, String)> {
     let docker = Docker::connect_with_local_defaults()?;
@@ -159,10 +162,9 @@ async fn start_tf_container() -> anyhow::Result<(String, String)> {
         .unwrap_or_else(|_| "ghcr.io/opentofu/opentofu:1".to_string());
 
     // 1) Ensure the image is present (pull if needed)
-    let pull_opts = CreateImageOptions {
-        from_image: image.as_str(),
-        ..Default::default()
-    };
+    let pull_opts = CreateImageOptionsBuilder::default()
+        .from_image(image.as_str())
+        .build();
 
     let mut pull_stream = docker.create_image(Some(pull_opts), None, None);
     while let Some(pull_result) = pull_stream.next().await {
@@ -174,34 +176,34 @@ async fn start_tf_container() -> anyhow::Result<(String, String)> {
 
     let name = format!("tf-run-{}", Uuid::new_v4());
 
-    let config = Config {
-        image: Some(image.as_str()),
+    let config = ContainerCreateBody {
+        image: Some(image.clone()),
         host_config: Some(HostConfig {
             auto_remove: Some(false),
             ..Default::default()
         }),
-        entrypoint: Some(vec!["/bin/sh"]),
-        working_dir: Some("/workspace"),
-        cmd: Some(vec!["-c", "tail -f /dev/null"]),
+        entrypoint: Some(vec!["/bin/sh".to_string()]),
+        working_dir: Some("/workspace".to_string()),
+        cmd: Some(vec!["-c".to_string(), "tail -f /dev/null".to_string()]),
         ..Default::default()
     };
 
+    let create_opts = CreateContainerOptionsBuilder::default()
+        .name(&name)
+        .build();
+
     let container = docker
-        .create_container(
-            Some(CreateContainerOptions {
-                name: &name,
-                platform: None,
-            }),
-            config,
-        )
+        .create_container(Some(create_opts), config)
         .await?;
+    
     docker
-        .start_container(&container.id, None::<StartContainerOptions<String>>)
+        .start_container(&container.id, None::<bollard::query_parameters::StartContainerOptions>)
         .await?;
     Ok((container.id, name))
 }
 
-use bollard::container::UploadToContainerOptions;
+use bollard::query_parameters::UploadToContainerOptionsBuilder;
+use bollard::body_full;
 use std::path::Path;
 use tar::Builder;
 
@@ -218,15 +220,13 @@ async fn copy_module_to_container(
         tar.finish()?;
     }
 
-    // 2) Wrap the Vec<u8> as Bytes and call upload_to_container
-    let tar_bytes = tokio_util::bytes::Bytes::from(buf);
-    let opts = UploadToContainerOptions {
-        path: "/workspace".to_string(),
-        ..Default::default()
-    };
+    // 2) Use body_full to convert Vec<u8> to hyper::Body
+    let opts = UploadToContainerOptionsBuilder::default()
+        .path("/workspace")
+        .build();
 
     docker
-        .upload_to_container(container_id, Some(opts), tar_bytes)
+        .upload_to_container(container_id, Some(opts), body_full(buf.into()))
         .await?;
 
     Ok(())
@@ -257,7 +257,7 @@ async fn exec(
                 cmd: Some(std::iter::once(cmd).chain(args.iter().copied()).collect()),
                 attach_stdout: Some(true),
                 attach_stderr: Some(true),
-                working_dir: Some("/workspace".into()),
+                working_dir: Some("/workspace"),
                 ..Default::default()
             },
         )
@@ -285,16 +285,15 @@ async fn exec(
     let text = String::from_utf8_lossy(&raw).into_owned();
 
     let exec_inspect = docker.inspect_exec(&exec.id).await?;
-    if let Some(error_code) = exec_inspect.exit_code {
-        if error_code != 0 {
-            return Err(anyhow!(format!(
-                "{} {} failed with exit code {} validate message {}",
-                cmd,
-                args.join(" "),
-                error_code,
-                text
-            )));
-        }
+    if let Some(error_code) = exec_inspect.exit_code
+        && error_code != 0 {
+        return Err(anyhow!(format!(
+            "{} {} failed with exit code {} validate message {}",
+            cmd,
+            args.join(" "),
+            error_code,
+            text
+        )));
     }
 
     Ok(text)
@@ -747,6 +746,7 @@ pub fn get_extra_environment_variables(
     )
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn get_extra_environment_variables_all(
     deployment_id: &str,
     environment: &str,

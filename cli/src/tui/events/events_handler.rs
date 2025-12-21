@@ -41,8 +41,8 @@ impl EventsHandler {
                 let grouped_events = app.get_grouped_events();
                 if let Some((job_id, events)) = grouped_events.get(app.events_browser_index) {
                     // Check if we already have the change record
-                    if !app.change_records.contains_key(job_id.as_str()) {
-                        if let Some(first_event) = events.first() {
+                    if !app.change_records.contains_key(job_id.as_str())
+                        && let Some(first_event) = events.first() {
                             // Determine change type from event field
                             // Note: API expects uppercase (PLAN, APPLY, DESTROY)
                             // The event field contains values like "apply", "plan", "destroy"
@@ -58,7 +58,6 @@ impl EventsHandler {
                                 deployment_id,
                                 change_type,
                             ));
-                        }
                     }
                 }
             }

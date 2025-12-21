@@ -291,7 +291,6 @@ impl DeploymentResult {
 ///     module=bucket_module,
 ///     region="us-west-2"
 /// )
-
 /// with bucket1:
 ///     bucket1.set_variables(
 ///         bucket_name="my-bucket12347ydfs3",
@@ -301,9 +300,7 @@ impl DeploymentResult {
 ///     print(f"Job ID: {result.job_id}")
 ///     print(f"Changes: {result.changes}")
 ///     # Run some tests here
-
 /// ```
-///
 #[pyclass(module = "infraweave")]
 pub struct Deployment {
     /// Underlying module response for the deployment target
@@ -654,12 +651,12 @@ impl Deployment {
                     let json_mod = py.import("json")?;
                     let kwargs = PyDict::new(py);
                     for (key, val) in map {
-                        if let serde_json::Value::Object(inner) = val {
-                            if let Some(field) = inner.get("value") {
-                                let val_py =
-                                    json_mod.call_method1("loads", (field.to_string(),))?;
-                                kwargs.set_item(key, val_py)?;
-                            }
+                        if let serde_json::Value::Object(inner) = val
+                            && let Some(field) = inner.get("value")
+                        {
+                            let val_py =
+                                json_mod.call_method1("loads", (field.to_string(),))?;
+                            kwargs.set_item(key, val_py)?;
                         }
                     }
                     let ns = simple_ns.call((), Some(&kwargs))?;
@@ -684,10 +681,10 @@ impl Deployment {
         _traceback: Option<Py<PyAny>>,
     ) -> PyResult<bool> {
         // If a deployment was run or an error occurred, destroy it
-        if slf.last_deployment.is_some() || slf.has_error {
-            if let Err(e) = slf.destroy() {
-                eprintln!("Automatic {}.destroy() failed: {}", slf.name, e);
-            }
+        if (slf.last_deployment.is_some() || slf.has_error)
+            && let Err(e) = slf.destroy()
+        {
+            eprintln!("Automatic {}.destroy() failed: {}", slf.name, e);
         }
         Ok(false)
     }

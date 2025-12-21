@@ -93,15 +93,15 @@ pub async fn handle_setup_workspace(deployment_id: &str, environment_id: &str) {
         .collect();
 
     let mut all_variables = deployment.variables.clone();
-    if let serde_json::Value::Object(ref mut map) = all_variables {
-        if let serde_json::Value::Object(extra_map) = serde_json::json!(extra_vars) {
-            map.extend(extra_map);
-        }
+    if let serde_json::Value::Object(ref mut map) = all_variables
+        && let serde_json::Value::Object(extra_map) = serde_json::json!(extra_vars)
+    {
+        map.extend(extra_map);
     }
 
     store_tf_vars_json(&all_variables, new_dir.to_str().unwrap());
     store_backend_file(
-        &handler.get_backend_provider(),
+        handler.get_backend_provider(),
         new_dir.to_str().unwrap(),
         &handler
             .get_backend_provider_arguments(environment_id, deployment_id)

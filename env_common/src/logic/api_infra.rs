@@ -261,8 +261,8 @@ pub async fn validate_and_prepare_claim(
     };
 
     let payload_with_variables = ApiInfraPayloadWithVariables {
-        payload: payload,
-        variables: variables,
+        payload,
+        variables,
     };
 
     Ok((deployment_id, payload_with_variables))
@@ -373,8 +373,8 @@ pub async fn destroy_infra(
                 };
 
                 let payload_with_variables = ApiInfraPayloadWithVariables {
-                    payload: payload,
-                    variables: variables,
+                    payload,
+                    variables,
                 };
 
                 let job_id: String = submit_claim_job(handler, &payload_with_variables).await?;
@@ -401,15 +401,11 @@ async fn verify_module_version(
         .await
     {
         Ok(Some(_)) => Ok(()),
-        Ok(None) => {
-            return Err(anyhow::anyhow!(
-                "Module version {} does not exist",
-                module_version
-            ));
-        }
-        Err(e) => {
-            return Err(anyhow::anyhow!("Failed to verify module version: {}", e));
-        }
+        Ok(None) => Err(anyhow::anyhow!(
+            "Module version {} does not exist",
+            module_version
+        )),
+        Err(e) => Err(anyhow::anyhow!("Failed to verify module version: {}", e)),
     }
 }
 
@@ -482,8 +478,8 @@ pub async fn driftcheck_infra(
                 };
 
                 let payload_with_variables = ApiInfraPayloadWithVariables {
-                    payload: payload,
-                    variables: variables,
+                    payload,
+                    variables,
                 };
 
                 let job_id: String = submit_claim_job(handler, &payload_with_variables).await?;
@@ -517,8 +513,7 @@ pub async fn submit_claim_job(
     let job_id: String = match mutate_infra(handler, payload.clone()).await {
         Ok(resp) => {
             info!("Request successfully submitted");
-            let job_id = resp.payload["job_id"].as_str().unwrap().to_string();
-            job_id
+            resp.payload["job_id"].as_str().unwrap().to_string()
         }
         Err(e) => {
             let error_text = e.to_string();

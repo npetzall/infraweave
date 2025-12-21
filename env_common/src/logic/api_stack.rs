@@ -24,7 +24,11 @@ use std::{
     collections::{HashMap, HashSet},
     fmt::Write,
     path::Path,
+    pin::Pin,
+    future::Future,
 };
+
+type UploadTask = Pin<Box<dyn Future<Output = Result<(), ModuleError>> + Send>>;
 
 pub struct ModuleStackData {
     terraform_module_code: String,
@@ -66,13 +70,13 @@ pub async fn publish_stack(
     validate_stack_name(&stack_manifest)?;
     validate_stack_kind(&stack_manifest)?;
 
-    if version_arg.is_some() {
+    if let Some(version) = version_arg {
         // In case a version argument is provided
         if stack_manifest.spec.version.is_some() {
             panic!("Version is not allowed when version is already set in module.yaml");
         }
-        info!("Using version: {}", version_arg.as_ref().unwrap());
-        stack_manifest.spec.version = Some(version_arg.unwrap().to_string());
+        info!("Using version: {}", version);
+        stack_manifest.spec.version = Some(version.to_string());
     }
     let claims = get_claims_in_stack(manifest_path)?;
     let claim_modules = get_modules_in_stack(handler, &claims).await;
@@ -94,7 +98,7 @@ pub async fn publish_stack(
     for requested_provider in requested_providers {
         info!("Querying version for provider {requested_provider}");
         match handler
-            .get_latest_provider_version(&requested_provider)
+            .get_latest_provider_version(requested_provider)
             .await
         {
             Ok(response) => match response {
@@ -124,7 +128,7 @@ pub async fn publish_stack(
     if !manual_tf.is_empty() {
         info!("Found terraform code, importing");
         hcl::parse(&manual_tf)
-            .expect(&format!(
+              .unwrap_or_else(|_| panic!(
                 "Unable to read terraform code from stack folder {}",
                 manifest_path
             ))
@@ -145,7 +149,7 @@ pub async fn publish_stack(
         let zip_data = env_utils::download_zip_to_vec(&url).await?;
         let tf_content = read_tf_from_zip(&zip_data).unwrap();
         hcl::parse(&tf_content)
-            .expect(&format!(
+              .unwrap_or_else(|_| panic!(
                 "Unable to read terraform code from provider {}@{}",
                 provider.name, provider.version
             ))
@@ -198,7 +202,7 @@ pub async fn publish_stack(
     if let Some(mapping) = stack_manifest.spec.locals.as_ref() {
         let to_remove = mapping
             .iter()
-            .map(|(k, _)| to_snake_case(&k.as_str().unwrap()))
+            .map(|(k, _)| to_snake_case(k.as_str().unwrap()))
             .collect::<Vec<String>>();
         stack_providers.iter_mut().for_each(|provider| {
             provider
@@ -213,11 +217,11 @@ pub async fn publish_stack(
             .generate_presigned_url(&module.s3_key, "modules")
             .await?;
         let zip_data = env_utils::download_zip_to_vec(&url).await?;
-        env_utils::unzip_vec_to(&zip_data, &temp_dir)?;
+        env_utils::unzip_vec_to(&zip_data, temp_dir)?;
         // Clean modules(remove provider) "iw-generated-providers.tf"
-        clean_root(&temp_dir).expect(&format!(
+          clean_root(temp_dir).unwrap_or_else(|_| panic!(
             "Unable to clean root files from {}",
-            &temp_dir.display()
+            temp_dir.display()
         ));
     }
 
@@ -302,7 +306,7 @@ pub async fn publish_stack(
                             ),
                         )
                     })
-                    .collect(),
+                    .collect::<Vec<_>>(),
                 &deployment,
                 &tf_input_resolver,
             ),
@@ -311,7 +315,7 @@ pub async fn publish_stack(
                 .iter()
                 .filter(|d| d.for_claim == deployment.metadata.name)
                 .flat_map(|d| d.depends_on.clone().into_iter())
-                .collect(),
+                .collect::<Vec<_>>(),
         ));
     }
 
@@ -329,7 +333,7 @@ pub async fn publish_stack(
     std::fs::write(temp_dir.join("main.tf"), &tf_stack_main).expect("Unable to write root main.tf");
 
     // Create lock-file
-    let tf_lock_file_content = run_terraform_provider_lock(&temp_dir).await.unwrap(); // runs docker
+    let tf_lock_file_content = run_terraform_provider_lock(temp_dir).await.unwrap(); // runs docker
     std::fs::write(temp_dir.join(".terraform.lock.hcl"), &tf_lock_file_content)
         .expect("Unable to write lock-file to stack");
 
@@ -339,7 +343,7 @@ pub async fn publish_stack(
         .map(|(key, value)| {
             let mut v = value.clone();
             v.name = key.to_string();
-            return v;
+            v
         })
         .collect();
     let tf_variables = _tf_variables
@@ -442,7 +446,7 @@ pub async fn publish_stack(
                     .memory
                     .unwrap_or_else(get_default_memory),
             ),
-            providers: providers,
+            providers,
         },
         api_version: stack_manifest.api_version.clone(),
     };
@@ -540,7 +544,7 @@ pub async fn publish_stack(
         tf_outputs,
         tf_required_providers,
         tf_lock_providers,
-        tf_extra_environment_variables: tf_extra_environment_variables,
+        tf_extra_environment_variables,
         s3_key: format!(
             "{}/{}-{}.zip",
             &stack_manifest.metadata.name, &stack_manifest.metadata.name, &version
@@ -618,9 +622,7 @@ pub async fn publish_stack(
     );
 
     // Combine all upload tasks into a single vector using boxed futures
-    let mut all_upload_tasks: Vec<
-        std::pin::Pin<Box<dyn std::future::Future<Output = Result<(), ModuleError>> + Send>>,
-    > = Vec::new();
+    let mut all_upload_tasks: Vec<UploadTask> = Vec::new();
 
     //Add stack upload tasks
     for region in all_regions.iter() {
@@ -636,9 +638,7 @@ pub async fn publish_stack(
                     info!("Stack published successfully in region {}", region);
                     Ok(())
                 }
-                Err(error) => {
-                    return Err(ModuleError::UploadModuleError(error.to_string()));
-                }
+                Err(error) => Err(ModuleError::UploadModuleError(error.to_string())),
             }
         });
         all_upload_tasks.push(task);
@@ -760,6 +760,7 @@ pub async fn deprecate_stack(
     // Check if this is the latest version - we don't allow deprecating the latest version
     let latest_stack = handler.get_latest_stack_version(stack, track).await?;
 
+    #[allow(clippy::collapsible_if)]
     if let Some(latest) = latest_stack {
         if latest.version == version {
             return Err(anyhow!(
@@ -829,7 +830,7 @@ fn validate_stack_kind(stack_manifest: &StackManifest) -> anyhow::Result<(), Mod
 
 pub async fn get_stack_preview(
     handler: &GenericCloudHandler,
-    manifest_path: &String,
+    manifest_path: &str,
 ) -> anyhow::Result<String, anyhow::Error> {
     println!("Preview stack from {}", manifest_path);
 
@@ -1059,7 +1060,7 @@ fn generate_terraform_module_single(
     let source = module
         .s3_key
         .split('/')
-        .last()
+        .next_back()
         .unwrap()
         .trim_end_matches(".zip");
     module_str.push_str(
@@ -1210,10 +1211,7 @@ fn generate_terraform_variable_single(
     let default_value: Option<String> = if in_dependency_map {
         Some(dependency_map.get(var_name).unwrap().to_string())
     } else {
-        match &variable.default {
-            Some(value) => Some(json_to_hcl(value.clone()).to_string()),
-            None => None,
-        }
+        variable.default.as_ref().map(|value| json_to_hcl(value.clone()).to_string())
     };
     let _type = variable._type.to_string();
     let _type = _type.trim_matches('"'); // remove quotes from type
@@ -1221,10 +1219,10 @@ fn generate_terraform_variable_single(
     let nullable = variable.nullable;
     let sensitive = variable.sensitive;
 
-    let default_line = if default_value == None && !nullable {
+    let default_line = if default_value.is_none() && !nullable {
         debug!("Default value is null and nullable is false for variable {}. This should be added as an example value", var_name);
         "".to_string()
-    } else if default_value == None && nullable {
+    } else if default_value.is_none() && nullable {
         "".to_string()
     } else {
         format!(
@@ -1792,6 +1790,7 @@ fn is_all_module_example_variables_valid(
         }
     }
 
+    #[allow(clippy::collapsible_if)]
     if !required_variables.is_empty() {
         if let Some(required_variable) = required_variables.first() {
             let key_str = required_variable.name.split("__").last().unwrap();
@@ -1812,7 +1811,7 @@ fn validate_examples(
     tf_variables: &[TfVariable],
     examples: &mut Option<Vec<ModuleExample>>,
 ) -> Result<(), ModuleError> {
-    if let Some(ref mut examples) = examples {
+    if let Some(examples) = examples.as_mut() {
         for example in examples.iter() {
             let example_variables = &example.variables;
             let (is_valid, error) =

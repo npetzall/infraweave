@@ -14,14 +14,12 @@ pub async fn validate_claim(
     let claim_name = claim
         .metadata
         .name
-        .as_ref()
-        .map(|s| s.as_str())
+        .as_deref()
         .unwrap_or("");
     let namespace = claim
         .metadata
         .namespace
-        .as_ref()
-        .map(|s| s.as_str())
+        .as_deref()
         .unwrap_or("default");
 
     info!(
@@ -67,7 +65,7 @@ pub async fn validate_claim(
     match validation_result {
         Ok((_deployment_id, _payload)) => {
             info!("Claim '{}' validated successfully", claim_name);
-            (true, format!("Claim validated successfully"))
+            (true, "Claim validated successfully".to_string())
         }
         Err(e) => {
             let msg = format!("Validation failed: {}", e);

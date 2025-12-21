@@ -35,13 +35,13 @@ pub fn get_diff(before_ref: &str, after_ref: &str) -> Result<ProcessedFiles, Str
                         });
 
                         // For modified files, also get the before content
-                        if status == "M" {
-                            if let Ok(before_content) = get_file_content(&file_path, before_ref) {
-                                deleted_files.push(FileChange {
-                                    path: file_path,
-                                    content: before_content,
-                                });
-                            }
+                        if status == "M"
+                            && let Ok(before_content) = get_file_content(&file_path, before_ref)
+                        {
+                            deleted_files.push(FileChange {
+                                path: file_path,
+                                content: before_content,
+                            });
                         }
                     }
                     Err(e) => {
@@ -92,7 +92,7 @@ mod tests {
         ];
 
         // Simulate FILE_PATH_PREFIX="claims/,modules/"
-        let prefixes = vec!["claims/", "modules/"];
+        let prefixes = ["claims/", "modules/"];
 
         let filtered: Vec<_> = files
             .into_iter()

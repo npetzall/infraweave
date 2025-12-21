@@ -6,16 +6,14 @@ use super::app::App;
 use super::events::{ClaimBuilderHandler, DetailHandler, EventsHandler, MainHandler, ModalHandler};
 
 pub async fn handle_events(app: &mut App) -> Result<()> {
-    if event::poll(Duration::from_millis(100))? {
-        if let Event::Key(key) = event::read()? {
-            if key.kind == KeyEventKind::Press {
-                if key.code == KeyCode::Char('c') && key.modifiers.contains(KeyModifiers::CONTROL) {
-                    app.should_quit = true;
-                    return Ok(());
-                }
-                handle_key_event(app, key.code, key.modifiers)?;
-            }
+    if event::poll(Duration::from_millis(100))?
+        && let Event::Key(key) = event::read()?
+        && key.kind == KeyEventKind::Press {
+        if key.code == KeyCode::Char('c') && key.modifiers.contains(KeyModifiers::CONTROL) {
+            app.should_quit = true;
+            return Ok(());
         }
+        handle_key_event(app, key.code, key.modifiers)?;
     }
     Ok(())
 }

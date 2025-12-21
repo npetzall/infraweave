@@ -9,6 +9,8 @@ use tokio::net::TcpListener;
 use tower_http::trace::TraceLayer;
 
 #[cfg(feature = "ui")]
+use utoipa::OpenApi;
+#[cfg(feature = "ui")]
 use utoipa_redoc::{Redoc, Servable};
 #[cfg(feature = "ui")]
 use utoipa_swagger_ui::SwaggerUi;
@@ -28,7 +30,7 @@ pub async fn run_server_with_listener(
 
     // Disable JWT auth if requested (for MCP internal use)
     if disable_auth {
-        std::env::set_var("DISABLE_JWT_AUTH_INSECURE", "true");
+        auth::set_disable_jwt_auth(true);
     }
 
     // Validate authentication configuration at startup
@@ -130,7 +132,7 @@ pub async fn run_server_on_port(
 
     // Disable JWT auth if requested (for MCP internal use)
     if disable_auth {
-        std::env::set_var("DISABLE_JWT_AUTH_INSECURE", "true");
+        auth::set_disable_jwt_auth(true);
     }
 
     // Validate authentication configuration at startup

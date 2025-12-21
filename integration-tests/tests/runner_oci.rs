@@ -23,12 +23,11 @@ mod runner_tests {
             let current_dir = env::current_dir().expect("Failed to get current directory");
             env_common::publish_module(
                 &handler,
-                &current_dir
+                current_dir
                     .join("modules/s3bucket-oci/")
                     .to_str()
-                    .unwrap()
-                    .to_string(),
-                &"dev".to_string(),
+                    .unwrap(),
+                "dev",
                 None,
         Some(OciArtifactSet {
                     oci_artifact_path: "oci-artifacts/".to_string(),
@@ -54,8 +53,8 @@ mod runner_tests {
             for file in files.iter() {
                 utils::upload_file(
                     &handler,
-                    &file.to_string(),
-                    &current_dir.join(file).to_str().unwrap().to_string(),
+                    file,
+                    current_dir.join(file).to_str().unwrap(),
                 )
                 .await
                 .unwrap();
@@ -102,7 +101,7 @@ mod runner_tests {
                 .await
             {
                 Ok((deployment, dependencies)) => (deployment, dependencies),
-                Err(_e) => Err("error").unwrap(),
+                Err(_e) => panic!("Failed to get deployment"),
             };
 
             assert_eq!(deployment.is_some(), true);
@@ -111,21 +110,27 @@ mod runner_tests {
             let payload = payload_with_variables.unwrap().payload;
             let payload_str = serde_json::to_string(&payload).unwrap();
 
-            env::set_var("PAYLOAD", payload_str);
-            env::set_var("TF_BUCKET", "dummy-tf-bucket");
-            env::set_var("REGION", "dummy-region");
-            env::set_var("OCI_ARTIFACT_MODE", "true");
+            unsafe {
+                env::set_var("PAYLOAD", payload_str);
+                env::set_var("TF_BUCKET", "dummy-tf-bucket");
+                env::set_var("REGION", "dummy-region");
+                env::set_var("OCI_ARTIFACT_MODE", "true");
+            }
 
             // Set cloud provider specific environment variables
             match handler.get_cloud_provider() {
                 "aws" => {
-                    env::set_var("TF_DYNAMODB_TABLE", "dummy-dynamodb-table");
+                    unsafe {
+                        env::set_var("TF_DYNAMODB_TABLE", "dummy-dynamodb-table");
+                    }
                 }
                 "azure" => {
-                    env::set_var("CONTAINER_GROUP_NAME", "running-test-job-id");
-                    env::set_var("ACCOUNT_ID", "dummy-account-id");
-                    env::set_var("STORAGE_ACCOUNT", "dummy-storage-account");
-                    env::set_var("RESOURCE_GROUP_NAME", "dummy-resource-group");
+                    unsafe {
+                        env::set_var("CONTAINER_GROUP_NAME", "running-test-job-id");
+                        env::set_var("ACCOUNT_ID", "dummy-account-id");
+                        env::set_var("STORAGE_ACCOUNT", "dummy-storage-account");
+                        env::set_var("RESOURCE_GROUP_NAME", "dummy-resource-group");
+                    }
                 }
                 _ => panic!("Unsupported cloud provider"),
             }
@@ -173,7 +178,9 @@ is_expected_branch if {
                 "policy_content": default_policy_content
             });
 
-            env::set_var("ATTESTATION_POLICY", serde_json::to_string(&policy).unwrap());
+            unsafe {
+                env::set_var("ATTESTATION_POLICY", serde_json::to_string(&policy).unwrap());
+            }
 
             run_terraform_runner(&handler).await.unwrap();
 
@@ -185,7 +192,7 @@ is_expected_branch if {
                     assert_eq!(deployment.is_some(), true);
                     assert_eq!(deployment.unwrap().status, "successful"); // This is set as last step in the runner
                 }
-                Err(_e) => Err("Failed to get deployment").unwrap(),
+                Err(_e) => panic!("Failed to get deployment"),
             };
 
             // TODO: Mock the commands and verify that all expected commands were run

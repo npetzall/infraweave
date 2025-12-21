@@ -207,9 +207,9 @@ pub fn get_variables_from_tf_files(contents: &str) -> Result<Vec<TfVariable>, St
     let mut variables = Vec::new();
 
     // Iterate through the HCL blocks (assuming `parsed_hcl` is correctly structured)
-    if let Some(var_blocks) = parsed_hcl.get("variable") {
-        if let Some(var_map) = var_blocks.as_object() {
-            for (var_name, var_attrs) in var_map {
+    if let Some(var_blocks) = parsed_hcl.get("variable")
+        && let Some(var_map) = var_blocks.as_object() {
+        for (var_name, var_attrs) in var_map {
                 // Extract the attributes for the variable (type, default, description, etc.)
                 let variable_type = var_attrs
                     .get("type")
@@ -256,7 +256,6 @@ pub fn get_variables_from_tf_files(contents: &str) -> Result<Vec<TfVariable>, St
                 debug!("Parsing variable block {:?} as {:?}", var_attrs, variable);
                 variables.push(variable);
             }
-        }
     }
 
     Ok(variables)

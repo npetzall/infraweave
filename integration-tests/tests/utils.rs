@@ -147,8 +147,10 @@ pub async fn start_lambda(
         .expect("Failed to start lambda");
     let lambda_host_port = container.get_host_port_ipv4(container_port).await.unwrap();
     let lambda_url = format!("http://127.0.0.1:{}", lambda_host_port);
-    std::env::set_var("LAMBDA_ENDPOINT_URL", &lambda_url);
-    return container;
+    unsafe {
+        std::env::set_var("LAMBDA_ENDPOINT_URL", &lambda_url);
+    }
+    container
 }
 
 pub async fn start_azure_function(
@@ -179,13 +181,11 @@ pub async fn start_azure_function(
         ])
         .with_network(network);
 
-    let container = image
+    image
         .with_mapped_port(port, container_port.tcp())
         .start()
         .await
-        .expect("Failed to start Azure Functions container");
-
-    container
+        .expect("Failed to start Azure Functions container")
 }
 
 pub async fn start_local_dynamodb(network: &str, port: u16) -> (ContainerAsync<DynamoDb>, String) {
@@ -224,14 +224,12 @@ pub async fn start_local_cosmosdb(network: &str, port: u16) -> ContainerAsync<Ge
     .with_env_var("LOG_LEVEL", "trace")
     .with_network(network);
 
-    let container = image
+    image
         .with_container_name("cosmos".to_string())
         .with_mapped_port(port, container_port.tcp())
         .start()
         .await
-        .expect("Failed to start local Cosmos DB Emulator");
-
-    container
+        .expect("Failed to start local Cosmos DB Emulator")
 }
 
 pub async fn start_local_minio(network: &str, port: u16) -> (ContainerAsync<GenericImage>, String) {
@@ -318,8 +316,8 @@ pub fn generate_random_network_name() -> String {
 #[allow(dead_code)]
 pub async fn upload_file(
     handler: &env_common::interface::GenericCloudHandler,
-    key: &String,
-    file_path: &String,
+    key: &str,
+    file_path: &str,
 ) -> Result<(), anyhow::Error> {
     let file_content = std::fs::read(file_path)
         .map_err(|e| anyhow::anyhow!("Failed to read file {}: {}", file_path, e))?;
@@ -341,7 +339,7 @@ pub async fn upload_file(
             Ok(())
         }
         Err(error) => {
-            return Err(anyhow::anyhow!("{}", error));
+            Err(anyhow::anyhow!("{}", error))
         }
     }
 }

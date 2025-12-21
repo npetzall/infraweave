@@ -23,11 +23,15 @@ use log::{debug, info, warn};
 use regex::Regex;
 use std::collections::HashMap;
 use std::{cmp::Ordering, path::Path};
+use std::pin::Pin;
+use std::future::Future;
 
 use crate::logic::api_provider::upload_provider_cache;
 use crate::logic::tf_input_resolver::TfInputResolver;
 use crate::logic::tf_provider_mgmt::TfProviderMgmt;
 use crate::logic::tf_root_module::{module_block, providers, variables};
+
+type UploadTask = Pin<Box<dyn Future<Output = Result<(), ModuleError>> + Send>>;
 use crate::{
     errors::ModuleError,
     interface::GenericCloudHandler,
@@ -54,13 +58,13 @@ pub async fn publish_module(
     validate_module_name(&module_yaml)?;
     validate_module_kind(&module_yaml)?;
 
-    if version_arg.is_some() {
+    if let Some(version) = version_arg {
         // In case a version argument is provided
         if module_yaml.spec.version.is_some() {
             panic!("Version is not allowed when version is already set in module.yaml");
         }
-        info!("Using version: {}", version_arg.as_ref().unwrap());
-        module_yaml.spec.version = Some(version_arg.unwrap().to_string());
+        info!("Using version: {}", version);
+        module_yaml.spec.version = Some(version.to_string());
     }
 
     // let temp_dir = unzip_to_tempdir(zip_file).unwrap(); // TODO: no need to save to disk as intermeditary step
@@ -104,7 +108,7 @@ pub async fn publish_module(
         let tf_content_provider = read_tf_from_zip(&provider_zip).unwrap();
 
         hcl::parse(&tf_content_provider)
-            .expect(&format!(
+            .unwrap_or_else(|_| panic!(
                 "Unable to read terraform from provider {}",
                 provider.name
             ))
@@ -172,9 +176,9 @@ pub async fn publish_module(
                     .iter()
                     .map(|block| {
                         let name = block.labels().first().unwrap().as_str().to_string();
-                        return (name.clone(), name.clone());
+                        (name.clone(), name.clone())
                     })
-                    .collect(),
+                    .collect::<Vec<_>>(),
                 &deployment,
                 &TfInputResolver::new(Vec::new(), Vec::new()),
             ),
@@ -192,7 +196,7 @@ pub async fn publish_module(
     std::fs::write(temp_dir.join("main.tf"), tf_root_main)
         .expect("Unable to write root providers.tf");
 
-    let tf_lock_file_content = run_terraform_provider_lock(&temp_dir).await.unwrap(); // runs docker
+    let tf_lock_file_content = run_terraform_provider_lock(temp_dir).await.unwrap(); // runs docker
 
     std::fs::write(temp_dir.join(".terraform.lock.hcl"), tf_lock_file_content)
         .expect("Unable to write lock-file to module");
@@ -222,13 +226,11 @@ pub async fn publish_module(
     .await
 }
 
-fn validate_providers(tf_providers: &Vec<ProviderResp>) {
+fn validate_providers(tf_providers: &[ProviderResp]) {
     let mut provider_map: HashMap<String, Vec<&ProviderResp>> = HashMap::new();
     tf_providers.iter().for_each(|p| {
         let key = p.manifest.spec.configuration_name();
-        if !provider_map.contains_key(&key) {
-            provider_map.insert(key, Vec::new());
-        }
+        provider_map.entry(key).or_default();
         let provider_vec = provider_map
             .get_mut(&p.manifest.spec.configuration_name())
             .unwrap();
@@ -255,9 +257,9 @@ pub async fn publish_module_from_zip(
     module_variables: Option<Vec<TfVariable>>,
 ) -> Result<(), ModuleError> {
     // Encode the zip file content to Base64
-    let zip_base64 = base64.encode(&zip_file);
+    let zip_base64 = base64.encode(zip_file);
 
-    let tf_content = read_tf_from_zip(&zip_file).unwrap(); // Get all .tf-files concatenated into a single string
+    let tf_content = read_tf_from_zip(zip_file).unwrap(); // Get all .tf-files concatenated into a single string
 
     let manifest =
         serde_yaml::to_string(&module_yaml).expect("Failed to serialize module manifest to YAML");
@@ -282,7 +284,7 @@ pub async fn publish_module_from_zip(
         .flat_map(|provider| provider.tf_variables.clone())
         .collect::<Vec<TfVariable>>();
 
-    match get_terraform_lockfile(&zip_file) {
+    match get_terraform_lockfile(zip_file) {
         Ok(_) => {
             println!("Lock file exists, that's greate!");
         }
@@ -303,7 +305,7 @@ pub async fn publish_module_from_zip(
         None => get_variables_from_tf_files(&tf_content)
             .unwrap()
             .iter()
-            .filter(|v| !tf_provider_variables.contains(&v))
+            .filter(|v| !tf_provider_variables.contains(v))
             .cloned()
             .collect(),
     };
@@ -434,7 +436,7 @@ pub async fn publish_module_from_zip(
     };
 
     let tf_lock_providers: Vec<TfLockProvider> =
-        get_providers_from_lockfile(&get_terraform_lockfile(&zip_file).unwrap()).unwrap();
+        get_providers_from_lockfile(&get_terraform_lockfile(zip_file).unwrap()).unwrap();
 
     let module = ModuleResp {
         track: track.to_string(),
@@ -501,11 +503,7 @@ pub async fn publish_module_from_zip(
             println!("Publishing module and ensuring providers in all regions with concurrency limit: {}", effective_concurrency_limit);
 
             // Combine all upload tasks into a single vector using boxed futures
-            let mut all_upload_tasks: Vec<
-                std::pin::Pin<
-                    Box<dyn std::future::Future<Output = Result<(), ModuleError>> + Send>,
-                >,
-            > = Vec::new();
+            let mut all_upload_tasks: Vec<UploadTask> = Vec::new();
 
             // Add provider upload tasks
             for region in all_regions.iter() {
@@ -807,6 +805,7 @@ pub async fn deprecate_module(
         handler.get_latest_module_version(module, track).await?
     };
 
+    #[allow(clippy::collapsible_if)]
     if let Some(latest) = latest_module {
         if latest.version == version {
             return Err(anyhow!(
@@ -985,7 +984,7 @@ pub async fn get_modules_download_url(
     Ok(url)
 }
 
-pub async fn precheck_module(manifest_path: &String) -> anyhow::Result<(), anyhow::Error> {
+pub async fn precheck_module(manifest_path: &str) -> anyhow::Result<(), anyhow::Error> {
     let module_yaml_path = Path::new(manifest_path).join("module.yaml");
     let manifest =
         std::fs::read_to_string(&module_yaml_path).expect("Failed to read module manifest file");

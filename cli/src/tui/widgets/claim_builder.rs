@@ -12,10 +12,9 @@ use crate::tui::state::claim_builder_state::{ClaimBuilderState, VariableInput};
 /// Shows default value if available, otherwise shows a type hint
 fn get_placeholder_text(var: &VariableInput) -> String {
     // If there's a default value, show it as a placeholder
-    if let Some(default_val) = &var.default_value {
-        if !default_val.is_empty() {
-            return format!("(default: {})", default_val);
-        }
+    if let Some(default_val) = &var.default_value
+        && !default_val.is_empty() {
+        return format!("(default: {})", default_val);
     }
 
     // No default or empty default - show type hint based on the variable type
@@ -257,7 +256,7 @@ fn render_enhanced_form_fields(f: &mut Frame, area: Rect, state: &ClaimBuilderSt
     let mut items = Vec::new();
 
     // Base fields with icons (deployment name and region)
-    let base_fields = vec![
+    let base_fields = [
         (
             "🏷️  Deployment Name",
             &state.deployment_name,
@@ -370,23 +369,21 @@ fn render_enhanced_form_fields(f: &mut Frame, area: Rect, state: &ClaimBuilderSt
         }
 
         // For stacks, add section headers for each module instance (only when visible and not already rendered)
-        if state.is_stack {
-            if let Some((instance_name, _)) = var.name.split_once("__") {
-                if !rendered_sections.contains(instance_name) {
-                    // New section - add header
-                    if !rendered_sections.is_empty() {
-                        // Add spacing between sections
-                        items.push(ListItem::new(Line::from("")));
-                    }
-                    items.push(ListItem::new(Line::from(vec![Span::styled(
-                        format!("── {} ──", instance_name),
-                        Style::default()
-                            .fg(Color::Magenta)
-                            .add_modifier(Modifier::BOLD),
-                    )])));
-                    rendered_sections.insert(instance_name.to_string());
-                }
+        if state.is_stack
+            && let Some((instance_name, _)) = var.name.split_once("__")
+            && !rendered_sections.contains(instance_name) {
+            // New section - add header
+            if !rendered_sections.is_empty() {
+                // Add spacing between sections
+                items.push(ListItem::new(Line::from("")));
             }
+            items.push(ListItem::new(Line::from(vec![Span::styled(
+                format!("── {} ──", instance_name),
+                Style::default()
+                    .fg(Color::Magenta)
+                    .add_modifier(Modifier::BOLD),
+            )])));
+            rendered_sections.insert(instance_name.to_string());
         }
 
         let is_selected = state.selected_field_index == global_idx;
