@@ -1,0 +1,34 @@
+[
+    {
+        "name": "cli",
+        "platforms": ["linux/amd64", "linux/arm64"]
+    },
+    {
+        "name": "gitops",
+        "platforms": ["linux/amd64", "linux/arm64"]
+    },
+    {
+        "name": "infraweave-mcp",
+        "platforms": ["linux/amd64", "linux/arm64"]
+    },
+    {
+        "name": "operator",
+        "platforms": ["linux/amd64", "linux/arm64"]
+    },
+    {
+        "name": "prometheus_exporter",
+        "platforms": ["linux/amd64", "linux/arm64"]
+    },
+    {
+        "name": "reconciler",
+        "platforms": ["linux/amd64", "linux/arm64"]
+    },
+    {
+        "name": "terraform_runner",
+        "platforms": ["linux/amd64", "linux/arm64"]
+    },
+    {
+        "name": "webserver-openapi",
+        "platforms": ["linux/amd64", "linux/arm64"]
+    }
+]

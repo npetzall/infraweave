@@ -25,20 +25,16 @@ jobs:
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      
       - name: Validate targets
         env:
           TARGETS: ${{ vars.TARGETS }}
           BINARIES: ${{ vars.BINARIES }}
-        run: |
-          missing=$(jq -r --argjson targets "$TARGETS" '
-            .[] | .targets[] | select(. as $t | $targets | has($t) | not)
-          ' <<< "$BINARIES" | sort -u)
-          
-          if [ -n "$missing" ]; then
-            missing_list=$(echo "$missing" | tr '\n' ',' | sed 's/,$//')
-            echo "::error::Missing BINARY_TARGETS: $missing_list"
-            exit 1
-          fi
+        run: .github/scripts/bin_validate-targets.sh
         shell: bash
       
       - name: Setup build matrix
@@ -46,23 +42,7 @@ jobs:
         env:
           TARGETS: ${{ vars.TARGETS }}
           BINARIES: ${{ vars.BINARIES }}
-        run: |
-          matrix=$(echo 'null' | jq -c '
-            {
-              include: ($targets | to_entries | map(.key as $target_name | {
-                name: .key,
-                rust_target: .value.rust_target,
-                runner: .value.runner,
-                bins: [$binaries[] | select(.targets | index($target_name)) | .bin],
-                cross: (if (.value | has("cross")) then .value.cross else true end)
-              }))
-            }
-          ' --argjson targets "$TARGETS" --argjson binaries "$BINARIES")
-          
-          echo "matrix=$matrix" >> $GITHUB_OUTPUT
-          
-          echo "Build matrix:"
-          echo "$matrix" | jq '.'
+        run: .github/scripts/bin_setup-build-matrix.sh
         shell: bash
 
       

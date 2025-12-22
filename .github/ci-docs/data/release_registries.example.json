@@ -1,0 +1,27 @@
+[
+    {
+        "name": "Docker Hub",
+        "registry": "docker.io",
+        "repository": "infraweave",
+        "auth_type": "login",
+        "user_secret": "DOCKER_USER",
+        "password_secret": "DOCKER_PASSWORD"
+    },
+    {
+        "name": "Quay.io",
+        "registry": "quay.io",
+        "repository": "infraweave",
+        "auth_type": "login",
+        "user_secret": "QUAY_USER",
+        "password_secret": "QUAY_PASSWORD"
+    },
+    {
+        "name": "AWS ECR Public",
+        "registry": "public.ecr.aws",
+        "repository": "infraweave",
+        "auth_type": "aws",
+        "account_secret": "AWS_ACCOUNT_ID",
+        "role_secret": "ECR_PUBLIC_PUSH_ROLE",
+        "aws_region_secret": "ECR_PUBLIC_AWS_REGION"
+    }
+]

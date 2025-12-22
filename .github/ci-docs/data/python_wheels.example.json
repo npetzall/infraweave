@@ -1,0 +1,8 @@
+[
+    "linux-amd64",
+    "linux-arm64",
+    "linux-amd64-musl",
+    "linux-arm64-musl",
+    "windows-amd64",
+    "macos-arm64"
+]
