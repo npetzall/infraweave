@@ -74,6 +74,21 @@ if [ "$COMMIT_COUNT" -eq 0 ]; then
   echo ""
   echo "  💡 Reason: No commits since last tag, version unchanged"
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  
+  # Write to GitHub step summary
+  {
+    echo "## 📌 VERSION CALCULATION SUMMARY"
+    echo ""
+    echo "| Field | Value |"
+    echo "|-------|-------|"
+    echo "| Last tag | \`$LAST_TAG\` |"
+    echo "| Commits since | $COMMIT_COUNT |"
+    echo "| Base version | \`${MAJOR}.${MINOR}.${PATCH}\` |"
+    echo "| Final version | \`$NEW_VERSION\` |"
+    echo ""
+    echo "💡 **Reason:** No commits since last tag, version unchanged"
+  } >> "$GITHUB_STEP_SUMMARY"
+  
   exit 0
 fi
 
@@ -224,3 +239,18 @@ echo ""
 echo "  💡 Version increment: $VERSION_REASON"
 echo "  💡 Suffix applied:    $SUFFIX_REASON"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+# Write to GitHub step summary
+{
+  echo "## 📌 VERSION CALCULATION SUMMARY"
+  echo ""
+  echo "| Field | Value |"
+  echo "|-------|-------|"
+  echo "| Last tag | \`$LAST_TAG\` |"
+  echo "| Commits since | $COMMIT_COUNT |"
+  echo "| Base version | \`${MAJOR}.${MINOR}.${PATCH}\` → \`$BASE_VERSION\` |"
+  echo "| Final version | \`$NEW_VERSION\` |"
+  echo ""
+  echo "💡 **Version increment:** $VERSION_REASON"
+  echo "💡 **Suffix applied:** $SUFFIX_REASON"
+} >> "$GITHUB_STEP_SUMMARY"
