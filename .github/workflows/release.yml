@@ -217,7 +217,7 @@ jobs:
           RELEASE_INFO="${RELEASE_INFO}  Tag: v${{ env.VERSION }}\n"
           RELEASE_INFO="${RELEASE_INFO}  Name: Release v${{ env.VERSION }}\n"
           RELEASE_INFO="${RELEASE_INFO}  Files:\n"
-          FILES=$(find ./release-binaries ./release-wheels -type f 2>/dev/null | sed 's/^/    - /' || true)
+          FILES=$(find ./release-binaries ./release-wheels -type f 2>/dev/null | sort | sed 's/^/    - /' || true)
           RELEASE_INFO="${RELEASE_INFO}${FILES}\n"
           
           echo -e "$RELEASE_INFO"
