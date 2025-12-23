@@ -1,13 +1,10 @@
 name: Build Python Wheels
 
 on:
-  push:
-    tags:
-      - "v*.*.*"
+  workflow_dispatch:
 
 permissions:
   contents: read
-  id-token: write  # Required for publishing to PyPI with trusted publishing
 
 jobs:
   build-and-publish:
