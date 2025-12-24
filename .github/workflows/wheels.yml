@@ -17,6 +17,7 @@ on:
 
 env:
   VERSION: ${{ inputs.version }}
+  PY_VERSIONS: python3.10 python3.11 python3.12 python3.13
   CARGO_TERM_VERBOSE: true
 
 jobs:
@@ -99,7 +100,7 @@ jobs:
         uses: PyO3/maturin-action@777bae81f5815a42f801f333e24216de636a5001
         with:
           target: ${{ matrix.rust_target }}
-          args: --release --out dist --find-interpreter --manifest-path infraweave_py/Cargo.toml
+          args: --release --out dist -i ${{ env.PY_VERSIONS }} --manifest-path infraweave_py/Cargo.toml
           manylinux: ${{ endsWith(matrix.rust_target, 'musl') && 'musllinux_1_2' || '2_28' }}
           before-script-linux: which yum &> /dev/null && yum install -y perl-core
       
@@ -108,14 +109,14 @@ jobs:
         uses: PyO3/maturin-action@777bae81f5815a42f801f333e24216de636a5001
         with:
           target: ${{ matrix.rust_target }}
-          args: --release --out dist --find-interpreter --manifest-path infraweave_py/Cargo.toml
+          args: --release --out dist -i ${{ env.PY_VERSIONS }} --manifest-path infraweave_py/Cargo.toml
       
       - name: Build wheels (macos)
         if: matrix.runner == 'macos-latest'
         uses: PyO3/maturin-action@777bae81f5815a42f801f333e24216de636a5001
         with:
           target: ${{ matrix.rust_target }}
-          args: --release --out dist --find-interpreter --manifest-path infraweave_py/Cargo.toml
+          args: --release --out dist -i ${{ env.PY_VERSIONS }} --manifest-path infraweave_py/Cargo.toml
 
       - name: Upload wheels
         uses: actions/upload-artifact@v4
