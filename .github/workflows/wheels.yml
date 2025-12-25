@@ -100,7 +100,7 @@ jobs:
         uses: PyO3/maturin-action@777bae81f5815a42f801f333e24216de636a5001
         with:
           target: ${{ matrix.rust_target }}
-          args: --release --out dist -i ${{ env.PY_VERSIONS }} --manifest-path infraweave_py/Cargo.toml
+          args: --release --out dist -i ${{ env.PY_VERSIONS }} --auditwheel repair --manifest-path infraweave_py/Cargo.toml
           manylinux: ${{ endsWith(matrix.rust_target, 'musl') && 'musllinux_1_2' || '2_28' }}
           before-script-linux: which yum &> /dev/null && yum install -y perl-core
       
