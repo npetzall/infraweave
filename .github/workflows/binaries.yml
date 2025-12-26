@@ -1,0 +1,27 @@
+name: Build Binaries (Reusable)
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        required: true
+        type: string
+        description: Version of the CLI to build (e.g., 0.1.0)
+  workflow_dispatch:
+    inputs:
+      version:
+        required: false
+        type: string
+        description: Version of the CLI to build (e.g., 0.1.0)
+        default: 0.0.0-manual
+env:
+  VERSION: ${{ inputs.version }}
+  CARGO_TERM_VERBOSE: true
+  K8S_OPENAPI_ENABLED_VERSION: v1.31
+
+jobs:
+  hello:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Echo hello
+        run: echo "hello"
