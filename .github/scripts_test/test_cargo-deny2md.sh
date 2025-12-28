@@ -49,7 +49,7 @@ if [ ! -f "$SARIF_FILE" ]; then
         ensure_cargo_deny
         echo "Running cargo deny check to create SARIF file..."
         cd "$REPO_ROOT"
-        cargo deny --format sarif check advisories bans sources > "$SARIF_FILE" || {
+        cargo deny --format sarif check > "$SARIF_FILE" || {
             echo "Warning: cargo deny check completed with errors, but SARIF file was created." >&2
         }
         echo "SARIF file created at '$SARIF_FILE'"
@@ -63,7 +63,7 @@ else
         ensure_cargo_deny
         echo "Running cargo deny check to update SARIF file..."
         cd "$REPO_ROOT"
-        cargo deny --format sarif check advisories bans sources > "$SARIF_FILE" || {
+        cargo deny --format sarif check > "$SARIF_FILE" || {
             echo "Warning: cargo deny check completed with errors, but SARIF file was updated." >&2
         }
         echo "SARIF file updated at '$SARIF_FILE'"
