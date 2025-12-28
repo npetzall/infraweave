@@ -43,13 +43,33 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh api repos/${{ github.repository }}/code-scanning/sarifs \
+          RESPONSE=$(gh api repos/${{ github.repository }}/code-scanning/sarifs \
             --method POST \
             -f commit_sha="${{ github.sha }}" \
             -f ref="${{ github.ref }}" \
             -f tool_name="cargo-deny" \
             -f checkout_uri="file://${{ github.workspace }}" \
-            -f sarif=$(gzip -c cargo-deny.sarif | base64 -w 0)
+            -f sarif=$(gzip -c cargo-deny.sarif | base64 -w 0))
+          
+          echo "Upload response: $RESPONSE"
+          
+          SARIF_ID=$(echo "$RESPONSE" | jq -r '.id')
+          SARIF_URL=$(echo "$RESPONSE" | jq -r '.url')
+          
+          echo "SARIF ID: $SARIF_ID"
+          echo "SARIF URL: $SARIF_URL"
+          
+          # Extract API path from URL (remove https://api.github.com/ prefix)
+          SARIF_API_PATH=$(echo "$SARIF_URL" | sed 's|https://api.github.com/||')
+          echo "SARIF API Path: $SARIF_API_PATH"
+          
+          # Make 5 calls to check the status
+          for i in {1..5}; do
+            echo "=== Call $i ==="
+            CALL_RESPONSE=$(gh api "$SARIF_API_PATH")
+            echo "$CALL_RESPONSE"
+            sleep 2
+          done
 
       - name: Generate job summary
         if: always()
