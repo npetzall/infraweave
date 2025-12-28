@@ -44,7 +44,7 @@ jobs:
         with:
           sarif_file: cargo-deny.sarif
           category: cargo-deny
-          wait-for-processing: false
+          wait-for-processing: true
 
       - name: Generate job summary
         if: always()
