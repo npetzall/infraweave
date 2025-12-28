@@ -48,7 +48,7 @@ jobs:
             -f commit_sha="${{ github.sha }}" \
             -f ref="${{ github.ref }}" \
             -f tool_name="cargo-deny" \
-            -f checkout_path="${{ github.workspace }}" \
+            -f checkout_uri="file://${{ github.workspace }}" \
             -f sarif=$(gzip -c cargo-deny.sarif | base64 -w 0)
 
       - name: Generate job summary
