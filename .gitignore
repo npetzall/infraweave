@@ -57,3 +57,5 @@ docs/cli-reference.md
 
 # Binary files
 binaries/
+# Cargo Deny SARIF file
+cargo-deny.sarif
