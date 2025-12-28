@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Shared wrapper script for GitHub Actions scripts
-# Creates a temporary GITHUB_OUTPUT file, executes the script, and prints the output
+# Creates temporary GITHUB_OUTPUT and GITHUB_STEP_SUMMARY files, executes the script, and prints the output
 #
 # Usage: github_wrapper.sh <script_path> [script_args...]
 
@@ -18,9 +18,13 @@ shift  # Remove first argument, rest are passed to the script
 GITHUB_OUTPUT=$(mktemp)
 export GITHUB_OUTPUT
 
+# Create temporary file for GITHUB_STEP_SUMMARY
+GITHUB_STEP_SUMMARY=$(mktemp)
+export GITHUB_STEP_SUMMARY
+
 # Cleanup function
 cleanup() {
-    rm -f "$GITHUB_OUTPUT"
+    rm -f "$GITHUB_OUTPUT" "$GITHUB_STEP_SUMMARY"
 }
 trap cleanup EXIT
 
@@ -41,6 +45,16 @@ else
     echo "(empty or not set)"
 fi
 echo "============================="
+
+# Print the content of GITHUB_STEP_SUMMARY (if any)
+echo ""
+echo "=== GITHUB_STEP_SUMMARY content ==="
+if [ -s "$GITHUB_STEP_SUMMARY" ]; then
+    cat "$GITHUB_STEP_SUMMARY"
+else
+    echo "(empty or not set)"
+fi
+echo "==================================="
 echo ""
 echo "Script exit code: $EXIT_CODE"
 
