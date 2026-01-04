@@ -30,7 +30,7 @@ jobs:
 
       - name: Install cargo-deny
         run: |
-          cargo install --locked cargo-deny --git https://github.com/npetzall/cargo-deny --branch sarif_fixes
+          cargo install --locked cargo-deny --git https://github.com/npetzall/cargo-deny --branch sarif_test
 
       - name: Run cargo deny check
         run: |
