@@ -30,10 +30,11 @@ jobs:
       version: ${{ steps.version.outputs.version }}
       commit_count: ${{ steps.version.outputs.commit_count }}
     steps:
-      - name: Checkout code
+      - name: Checkout code (shallow, no blobs)
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Fetch all history to find tags
+          fetch-depth: 1  # Shallow clone, we'll fetch what we need
+          filter: blob:none  # Don't fetch file contents, only commits
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
 
       - name: Calculate version and count commits
