@@ -54,3 +54,5 @@ docs/api/*.md
 # Auto-generated documentation files
 docs/changelog.md
 docs/cli-reference.md
+
+new-feature_commit.md
