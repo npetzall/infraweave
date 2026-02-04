@@ -2,7 +2,6 @@ use anyhow::{anyhow, Context, Result};
 use bollard::exec::StartExecResults;
 use bollard::image::CreateImageOptions;
 use env_defs::{ApiInfraPayload, ExtraData, TfLockProvider};
-use log::warn;
 use serde::Deserialize;
 use serde_json::Value;
 use std::fs::{write, File};
@@ -114,7 +113,7 @@ pub async fn run_terraform_provider_lock(temp_module_path: &Path) -> Result<Stri
     match exec_terraform(&docker, &id, &["init", "-no-color"]).await {
         Ok(init_output) => println!("Init command output:\n{}", init_output),
         Err(e) => {
-            stop(&docker, &name).await?;
+            stop_container(&docker, &name);
             return Err(e);
         }
     };
@@ -122,31 +121,32 @@ pub async fn run_terraform_provider_lock(temp_module_path: &Path) -> Result<Stri
     match exec_terraform(&docker, &id, &["validate"]).await {
         Ok(validate_out) => println!("Validate command output:\n{}", validate_out),
         Err(e) => {
-            stop(&docker, &name).await?;
+            stop_container(&docker, &name);
             return Err(e);
         }
     };
 
     match exec(&docker, &id, "cat", &["/workspace/.terraform.lock.hcl"]).await {
         Ok(lockfile_content) => {
-            let stop_request = stop(&docker, &name);
+            stop_container(&docker, &name);
             println!("lockfile_content:\n{}", &lockfile_content);
-            if let Err(e) = stop_request.await {
-                warn!("Failed to stop and remove docker: {}", e);
-            }
             Ok(lockfile_content)
         }
         Err(e) => {
-            stop(&docker, &name).await?;
+            stop_container(&docker, &name);
             return Err(e);
         }
     }
 }
 
-async fn stop(docker: &Docker, name: &String) -> Result<(), anyhow::Error> {
-    let _ = docker.stop_container(&name, None).await?;
-    let _ = docker.remove_container(&name, None).await?;
-    Ok(())
+fn stop_container(docker: &Docker, name: &str) {
+    tokio::spawn({
+        let docker = docker.clone();
+        let name = name.to_string();
+        async move {
+            let _ = docker.stop_container(&name, None).await;
+        }
+    });
 }
 
 use bollard::service::HostConfig;
@@ -177,7 +177,7 @@ async fn start_tf_container() -> anyhow::Result<(String, String)> {
     let config = Config {
         image: Some(image.as_str()),
         host_config: Some(HostConfig {
-            auto_remove: Some(false),
+            auto_remove: Some(true),
             ..Default::default()
         }),
         entrypoint: Some(vec!["/bin/sh"]),
