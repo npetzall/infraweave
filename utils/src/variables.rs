@@ -461,16 +461,14 @@ mod tests {
                 },
             },
             tf_outputs: vec![],
-            tf_variables: vec![
-                TfVariable {
-                    name: "config_object".to_string(),
-                    _type: Value::String("object({name=string,enabled=bool})".to_string()),
-                    default: None,
-                    description: "Configuration object".to_string(),
-                    nullable: false,
-                    sensitive: false,
-                },
-            ],
+            tf_variables: vec![TfVariable {
+                name: "config_object".to_string(),
+                _type: Value::String("object({name=string,enabled=bool})".to_string()),
+                default: None,
+                description: "Configuration object".to_string(),
+                nullable: false,
+                sensitive: false,
+            }],
             tf_extra_environment_variables: vec![],
             tf_providers: vec![],
             tf_required_providers: vec![],
@@ -491,7 +489,11 @@ mod tests {
         });
 
         let result = verify_variable_existence_and_type(&module, &variables);
-        assert!(result.is_ok(), "Should allow object for object(...) type variable. Error: {:?}", result.err());
+        assert!(
+            result.is_ok(),
+            "Should allow object for object(...) type variable. Error: {:?}",
+            result.err()
+        );
     }
 
     #[test]
@@ -526,16 +528,14 @@ mod tests {
                 },
             },
             tf_outputs: vec![],
-            tf_variables: vec![
-                TfVariable {
-                    name: "config_object".to_string(),
-                    _type: Value::String("object({name=string,enabled=bool})".to_string()),
-                    default: None,
-                    description: "Configuration object".to_string(),
-                    nullable: false,
-                    sensitive: false,
-                },
-            ],
+            tf_variables: vec![TfVariable {
+                name: "config_object".to_string(),
+                _type: Value::String("object({name=string,enabled=bool})".to_string()),
+                default: None,
+                description: "Configuration object".to_string(),
+                nullable: false,
+                sensitive: false,
+            }],
             tf_extra_environment_variables: vec![],
             tf_providers: vec![],
             tf_required_providers: vec![],
@@ -553,7 +553,10 @@ mod tests {
         });
 
         let result = verify_variable_existence_and_type(&module, &variables);
-        assert!(result.is_err(), "Should reject string for object(...) type variable");
+        assert!(
+            result.is_err(),
+            "Should reject string for object(...) type variable"
+        );
         let error_msg = format!("{:?}", result.err());
         assert!(
             error_msg.contains("is of type string but should be of type object"),
