@@ -1,0 +1,30 @@
+name: CI (v0.2.x)
+
+on:
+  push:
+    branches: [v0.2.x]
+    paths-ignore: ['**/*.md']
+  pull_request:
+    branches: [v0.2.x]
+    paths-ignore: ['**/*.md']
+  workflow_dispatch:
+    inputs:
+      release:
+        description: "Whether this is a release build"
+        required: false
+        type: boolean
+        default: false
+      pre_release:
+        description: "Whether this is a pre-release build"
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+    with:
+      release_branch: v0.2.x
+      release: ${{ github.event.inputs.release == 'true' }}
+      pre_release: ${{ github.event.inputs.pre_release == 'true' }}
+    secrets: inherit
