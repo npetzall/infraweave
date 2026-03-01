@@ -27,6 +27,9 @@ edition = "2021"
 [workspace.lints.rust]
 warnings = "deny"
 
+[workspace.dependencies]
+hcl-rs = "0.19.6"
+
 [profile.ci-tests]
 inherits = "test"
 debug = 1

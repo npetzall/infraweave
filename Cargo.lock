@@ -3625,12 +3625,13 @@ dependencies = [
 
 [[package]]
 name = "hcl-edit"
-version = "0.8.5"
+version = "0.9.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1ce27e8955fa1d1f048aab75581b699df1ab6e911535fad3c88cb583986efbc0"
+checksum = "0e563477c1d5727912396fdca1ec56c33a12e2d4a4bd16702f8588348689a9e6"
 dependencies = [
  "fnv",
  "hcl-primitives",
+ "pratt",
  "vecmap-rs",
  "winnow",
 ]
@@ -3650,9 +3651,9 @@ dependencies = [
 
 [[package]]
 name = "hcl-rs"
-version = "0.18.4"
+version = "0.19.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d07c2f533407c55ca997fdebea4f26516c282ff9412b1bfca0f8f37bc1c9fd78"
+checksum = "a381780225f5991adbb268cac33939382ac44f98d6e8e639e06ba0ffe3378e5a"
 dependencies = [
  "hcl-edit",
  "hcl-primitives",
@@ -6268,6 +6269,12 @@ checksum = "77957b295656769bb8ad2b6a6b09d897d94f05c41b069aede1fcdaa675eaea04"
 dependencies = [
  "zerocopy 0.7.35",
 ]
+
+[[package]]
+name = "pratt"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "17e0a4425d076f0718b820673a38fbf3747080c61017eeb0dd79bc7e472b8bb8"
 
 [[package]]
 name = "pretty_assertions"
