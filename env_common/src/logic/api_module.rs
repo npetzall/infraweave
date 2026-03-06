@@ -1102,8 +1102,227 @@ fn is_all_module_example_variables_valid(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use env_defs::{ProviderManifest, ProviderMetaData, ProviderSpec};
+    use async_trait::async_trait;
+    use env_defs::{
+        Dependent, DeploymentResp, EventData, InfraChangeRecord, JobStatus, PolicyResp,
+        ProjectData, ProviderManifest, ProviderMetaData, ProviderSpec,
+    };
+    use mockall::mock;
     use pretty_assertions::assert_eq;
+    use std::sync::Arc;
+    use std::{future::Future, pin::Pin};
+    use tokio::runtime::Builder;
+
+    mock! {
+        pub TestCloudProvider {}
+
+        #[async_trait]
+        impl CloudProvider for TestCloudProvider {
+            fn get_project_id(&self) -> &str;
+            async fn get_user_id(&self) -> Result<String, anyhow::Error>;
+            fn get_region(&self) -> &str;
+            fn get_function_endpoint(&self) -> Option<String>;
+            fn get_cloud_provider(&self) -> &str;
+            fn get_backend_provider(&self) -> &str;
+            fn get_storage_basepath(&self) -> String;
+            async fn get_backend_provider_arguments(
+                &self,
+                environment: &str,
+                deployment_id: &str,
+            ) -> serde_json::Value;
+            async fn set_backend(
+                &self,
+                exec: &mut tokio::process::Command,
+                deployment_id: &str,
+                environment: &str,
+            );
+            async fn get_current_job_id(&self) -> Result<String, anyhow::Error>;
+            async fn get_project_map(&self) -> Result<serde_json::Value, anyhow::Error>;
+            async fn get_all_regions(&self) -> Result<Vec<String>, anyhow::Error>;
+            async fn run_function(&self, payload: &serde_json::Value)
+                -> Result<env_defs::GenericFunctionResponse, anyhow::Error>;
+            fn read_db_generic(
+                &self,
+                table: &str,
+                query: &serde_json::Value,
+            ) -> Pin<Box<dyn Future<Output = Result<Vec<serde_json::Value>, anyhow::Error>> + Send>>;
+            async fn get_latest_module_version(
+                &self,
+                module: &str,
+                track: &str,
+            ) -> Result<Option<ModuleResp>, anyhow::Error>;
+            async fn get_latest_stack_version(
+                &self,
+                stack: &str,
+                track: &str,
+            ) -> Result<Option<ModuleResp>, anyhow::Error>;
+            async fn get_latest_provider_version(
+                &self,
+                provider: &str,
+            ) -> Result<Option<ProviderResp>, anyhow::Error>;
+            async fn generate_presigned_url(
+                &self,
+                key: &str,
+                bucket: &str,
+            ) -> Result<String, anyhow::Error>;
+            async fn get_all_latest_module(&self, track: &str) -> Result<Vec<ModuleResp>, anyhow::Error>;
+            async fn get_all_latest_stack(&self, track: &str) -> Result<Vec<ModuleResp>, anyhow::Error>;
+            async fn get_all_latest_provider(&self) -> Result<Vec<ProviderResp>, anyhow::Error>;
+            async fn get_all_module_versions(
+                &self,
+                module: &str,
+                track: &str,
+            ) -> Result<Vec<ModuleResp>, anyhow::Error>;
+            async fn get_all_stack_versions(
+                &self,
+                stack: &str,
+                track: &str,
+            ) -> Result<Vec<ModuleResp>, anyhow::Error>;
+            async fn get_module_version(
+                &self,
+                module: &str,
+                track: &str,
+                version: &str,
+            ) -> Result<Option<ModuleResp>, anyhow::Error>;
+            async fn get_stack_version(
+                &self,
+                module: &str,
+                track: &str,
+                version: &str,
+            ) -> Result<Option<ModuleResp>, anyhow::Error>;
+            async fn get_all_deployments(
+                &self,
+                environment: &str,
+                include_deleted: bool,
+            ) -> Result<Vec<DeploymentResp>, anyhow::Error>;
+            async fn get_deployment_and_dependents(
+                &self,
+                deployment_id: &str,
+                environment: &str,
+                include_deleted: bool,
+            ) -> Result<(Option<DeploymentResp>, Vec<Dependent>), anyhow::Error>;
+            async fn get_deployment(
+                &self,
+                deployment_id: &str,
+                environment: &str,
+                include_deleted: bool,
+            ) -> Result<Option<DeploymentResp>, anyhow::Error>;
+            async fn get_job_status(&self, job_id: &str) -> Result<Option<JobStatus>, anyhow::Error>;
+            async fn get_deployments_using_module(
+                &self,
+                module: &str,
+                environment: &str,
+                include_deleted: bool,
+            ) -> Result<Vec<DeploymentResp>, anyhow::Error>;
+            async fn get_plan_deployment(
+                &self,
+                deployment_id: &str,
+                environment: &str,
+                job_id: &str,
+            ) -> Result<Option<DeploymentResp>, anyhow::Error>;
+            async fn get_dependents(
+                &self,
+                deployment_id: &str,
+                environment: &str,
+            ) -> Result<Vec<Dependent>, anyhow::Error>;
+            async fn get_deployments_to_driftcheck(&self) -> Result<Vec<DeploymentResp>, anyhow::Error>;
+            async fn get_all_projects(&self) -> Result<Vec<ProjectData>, anyhow::Error>;
+            async fn get_current_project(&self) -> Result<ProjectData, anyhow::Error>;
+            async fn get_events(
+                &self,
+                deployment_id: &str,
+                environment: &str,
+            ) -> Result<Vec<EventData>, anyhow::Error>;
+            async fn get_all_events_between(
+                &self,
+                start_epoch: u128,
+                end_epoch: u128,
+            ) -> Result<Vec<EventData>, anyhow::Error>;
+            async fn get_change_record(
+                &self,
+                environment: &str,
+                deployment_id: &str,
+                job_id: &str,
+                change_type: &str,
+            ) -> Result<InfraChangeRecord, anyhow::Error>;
+            async fn get_newest_policy_version(
+                &self,
+                policy: &str,
+                environment: &str,
+            ) -> Result<PolicyResp, anyhow::Error>;
+            async fn get_all_policies(&self, environment: &str) -> Result<Vec<PolicyResp>, anyhow::Error>;
+            async fn get_policy_download_url(&self, key: &str) -> Result<String, anyhow::Error>;
+            async fn get_policy(
+                &self,
+                policy: &str,
+                environment: &str,
+                version: &str,
+            ) -> Result<PolicyResp, anyhow::Error>;
+            async fn get_environment_variables(&self) -> Result<serde_json::Value, anyhow::Error>;
+            async fn download_state_file(
+                &self,
+                environment: &str,
+                deployment_id: &str,
+                output: Option<String>,
+            ) -> Result<(), anyhow::Error>;
+        }
+    }
+
+    #[test]
+    fn test_deprecate_module_returns_error_when_module_not_found() {
+        let mut mock_provider = MockTestCloudProvider::new();
+        mock_provider
+            .expect_get_module_version()
+            .times(1)
+            .returning(|_, _, _| Ok(None));
+
+        let handler = GenericCloudHandler::with_provider(Arc::new(mock_provider));
+
+        let rt = Builder::new_current_thread().enable_all().build().unwrap();
+        let result = rt.block_on(deprecate_module(
+            &handler,
+            "test-module",
+            "stable",
+            "1.2.3",
+            Some("deprecated"),
+        ));
+
+        assert!(result.is_err());
+        let error_message = format!("{}", result.unwrap_err());
+        assert!(
+            error_message.contains("Module test-module version 1.2.3 not found in track stable")
+        );
+    }
+
+    #[test]
+    fn test_deprecate_module_returns_error_when_already_deprecated() {
+        let mut mock_provider = MockTestCloudProvider::new();
+        mock_provider
+            .expect_get_module_version()
+            .times(1)
+            .returning(|_, _, _| {
+                let mut module = ModuleResp::default();
+                module.module = "test-module".to_string();
+                module.version = "1.2.3".to_string();
+                module.deprecated = true;
+                Ok(Some(module))
+            });
+
+        let handler = GenericCloudHandler::with_provider(Arc::new(mock_provider));
+
+        let rt = Builder::new_current_thread().enable_all().build().unwrap();
+        let result = rt.block_on(deprecate_module(
+            &handler,
+            "test-module",
+            "stable",
+            "1.2.3",
+            Some("deprecated"),
+        ));
+
+        assert!(result.is_err());
+        let error_message = format!("{}", result.unwrap_err());
+        assert!(error_message.contains("Module test-module version 1.2.3 is already deprecated"));
+    }
 
     #[test]
     fn test_is_example_variables_valid() {
