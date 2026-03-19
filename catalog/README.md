@@ -12,8 +12,8 @@ A catalog entry consists of:
 The crate is centered around the `Catalog` trait, which models common operations across all catalog kinds:
 
 1. Create a new version (metadata + bytes) with `add_*`
-2. Evolve entry availability/state via `promote_*`, `deprecate_*`, and `yank_*`
-3. Fetch versions (`get_*`) and access the immutable binary content (`download_*`)
+2. Evolve entry availability/state via `promote` / `deprecate` / `yank` and `promote_*` / `deprecate_*` / `yank_*`
+3. Fetch versions (`get` / `get_*`) and access the immutable binary content (`download_*`)
 4. Perform unified listing queries via `list` / `list_providers` / `list_modules` / `list_stacks`
 5. Attach and download additional binary artifacts (for example build info or attestations)
 
@@ -25,6 +25,8 @@ Defined in `catalog/src/lib.rs`, it includes methods for:
 - Providers: `add_provider`, `promote_provider`, `deprecate_provider`, `yank_provider`, `get_provider`, `download_provider`
 - Modules: `add_module`, `promote_module`, `deprecate_module`, `yank_module`, `get_module`, `download_module`
 - Stacks: `add_stack`, `promote_stack`, `deprecate_stack`, `yank_stack`, `get_stack`, `download_stack`
+- Management: `promote`, `deprecate`, `yank` (unified) and convenience helpers `promote_provider|module|stack`, `deprecate_provider|module|stack`, `yank_provider|module|stack`
+- Fetching: `get` (unified) and convenience helpers `get_provider`, `get_module`, `get_stack`
 - Listing: `list`, plus convenience helpers `list_providers`, `list_modules`, `list_stacks`
 - Attachments: `add_attachment`, `list_attachments`, `download_attachment`
 
@@ -62,6 +64,7 @@ Listing APIs (`list`, `list_providers`, `list_modules`, `list_stacks`) support t
   - If `mask` includes `metadata`, then `Provider|Module|Stack.metadata` SHOULD be `Some(...)`; otherwise it SHOULD be `None`.
   - If `mask` includes `manifest`, then `Provider|Module|Stack.manifest` SHOULD be `Some(...)`; otherwise it SHOULD be `None`.
   - If `mask` includes `terraform`, then `Provider|Module|Stack.terraform` SHOULD be `Some(...)`; otherwise it SHOULD be `None`.
+  - If `mask` includes `version_diff`, then `Provider|Module|Stack.version_diff` SHOULD be `Some(...)`; otherwise it SHOULD be `None`.
   - If `mask` includes `stack_data`, then `Stack.stack_data` SHOULD be `Some(...)`; otherwise it SHOULD be `None`.
 
 Notes:
