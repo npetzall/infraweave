@@ -23,14 +23,14 @@ env_defs = { path = "../defs" }
 env_utils = { path = "../utils" }
 env_aws = { path = "../env_aws" }
 env_azure = { path = "../env_azure" }
-anyhow = "1.0"
+anyhow = { workspace = true }
 log = "0.4"
 env_logger = "0.11"
 reqwest = { version = "0.11", features = ["json"] }
 openssl = { version = "0.10", features = ["vendored"] }
 futures = "0.3.31"
 base64 = "0.22"
-async-trait = "0.1.50"
+async-trait = { workspace = true }
 cached = { version = "0.46", features = ["async"] }
 uuid = { version = "1.0", features = ["v4"] }
 axum = "0.7"
