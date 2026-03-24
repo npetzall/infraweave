@@ -1,0 +1,40 @@
+{
+  "track": "dev",
+  "track_version": "0.0.0-dev.1",
+  "version": "0.0.0-dev.1",
+  "timestamp": "2024-01-17T12:00:00Z",
+  "module_name": "S3Bucket",
+  "module": "s3bucket",
+  "module_type": "module",
+  "description": "S3 bucket module (dev)",
+  "reference": "myorg/s3bucket",
+  "manifest": {
+    "metadata": { "name": "s3bucket" },
+    "apiVersion": "v1",
+    "kind": "Module",
+    "spec": {
+      "moduleName": "S3Bucket",
+      "version": "0.0.0-dev.1",
+      "description": "S3 bucket module",
+      "reference": "myorg/s3bucket",
+      "examples": null,
+      "cpu": null,
+      "memory": null,
+      "providers": []
+    }
+  },
+  "tf_variables": [],
+  "tf_outputs": [],
+  "tf_providers": [],
+  "tf_required_providers": [],
+  "tf_lock_providers": [],
+  "tf_extra_environment_variables": [],
+  "s3_key": "modules/dev/s3bucket/000.000.000-dev.1/s3bucket.zip",
+  "oci_artifact_set": null,
+  "stack_data": null,
+  "version_diff": null,
+  "cpu": "256",
+  "memory": "512",
+  "deprecated": false,
+  "deprecated_message": null
+}

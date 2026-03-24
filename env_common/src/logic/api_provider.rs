@@ -113,6 +113,9 @@ pub async fn publish_provider_from_zip(
             "{}/{}-{}.zip",
             &provider_yaml.metadata.name, &provider_yaml.metadata.name, &version
         ), // s3_key -> "{provider}/{provider}-{version}.zip"
+        deprecated: false,
+        deprecated_message: None,
+        yanked: false,
     };
 
     let all_regions = handler.get_all_regions().await?;

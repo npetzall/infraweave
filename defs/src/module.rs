@@ -164,6 +164,8 @@ pub struct ModuleResp {
     pub deprecated: bool,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub deprecated_message: Option<String>,
+    #[serde(default)]
+    pub yanked: bool,
 }
 
 pub fn deserialize_module_manifest<'de, D>(deserializer: D) -> Result<ModuleManifest, D::Error>

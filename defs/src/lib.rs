@@ -59,6 +59,6 @@ pub use resource_change::{
     pretty_print_resource_changes, sanitize_resource_changes, sanitize_resource_changes_from_plan,
     ResourceAction, ResourceMode, SanitizedResourceChange,
 };
-pub use stack::StackManifest;
+pub use stack::{Metadata as StackMetadata, StackManifest, StackSpec};
 pub use tfoutput::TfOutput;
 pub use tfprovider::{Metadata as ProviderMetaData, ProviderManifest, ProviderResp, ProviderSpec};

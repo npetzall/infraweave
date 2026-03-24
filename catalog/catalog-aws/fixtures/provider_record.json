@@ -1,0 +1,22 @@
+{
+  "name": "aws",
+  "version": "5.45.0",
+  "timestamp": "2024-01-15T12:00:00Z",
+  "description": "AWS provider",
+  "reference": "hashicorp/aws",
+  "manifest": {
+    "metadata": { "name": "aws" },
+    "apiVersion": "v1",
+    "kind": "Provider",
+    "spec": {
+      "provider": "aws",
+      "alias": null,
+      "version": "5.45.0",
+      "description": "AWS provider",
+      "reference": "hashicorp/aws"
+    }
+  },
+  "tf_variables": [],
+  "tf_extra_environment_variables": [],
+  "s3_key": "providers/aws/005.045.000/aws.zip"
+}

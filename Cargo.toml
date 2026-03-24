@@ -20,8 +20,13 @@ members = [
     "webserver-openapi",
     "integration-tests",
     "graph",
-    "catalog",
-    "catalog-aws",
+    "catalog/catalog-trait",
+    "catalog/catalog-aws-apigw",
+    "catalog/catalog-aws",
+    "catalog/catalog-http",
+    "catalog/catalog-mem",
+    "catalog/catalog-client",
+    "catalog/catalog-client-aws-http",
 ]
 
 [workspace.package]

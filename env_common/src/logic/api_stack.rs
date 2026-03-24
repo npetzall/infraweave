@@ -549,6 +549,7 @@ pub async fn publish_stack(
         tf_providers: stack_providers,
         deprecated: false,
         deprecated_message: None,
+        yanked: false,
     };
 
     let stack_zip = match env_utils::get_zip_file(
@@ -2561,6 +2562,7 @@ output "bucket2__list_of_strings" {
                 tf_providers: vec![example_provider_aws()],
                 deprecated: false,
                 deprecated_message: None,
+                ..Default::default()
             },
         )];
 
@@ -2865,6 +2867,7 @@ output "bucket2__list_of_strings" {
                 tf_providers: vec![example_provider_aws()],
                 deprecated: false,
                 deprecated_message: None,
+                ..Default::default()
             },
         )];
 
@@ -2979,6 +2982,7 @@ output "bucket2__list_of_strings" {
             tf_providers: vec![example_provider_aws()],
             deprecated: false,
             deprecated_message: None,
+            ..Default::default()
         };
 
         let claim_modules = [
@@ -3095,6 +3099,7 @@ output "bucket2__list_of_strings" {
             tf_providers: vec![example_provider_aws()],
             deprecated: false,
             deprecated_message: None,
+            ..Default::default()
         };
 
         let claim_modules = [
@@ -3219,6 +3224,7 @@ output "bucket2__list_of_strings" {
             tf_providers: vec![example_provider_aws()],
             deprecated: false,
             deprecated_message: None,
+            ..Default::default()
         };
 
         let claim_modules = [
@@ -3348,6 +3354,7 @@ output "bucket2__list_of_strings" {
             tf_providers: vec![example_provider_aws()],
             deprecated: false,
             deprecated_message: None,
+            ..Default::default()
         };
 
         let claim_modules = [
@@ -3462,6 +3469,7 @@ output "bucket2__list_of_strings" {
             tf_providers: vec![example_provider_aws()],
             deprecated: false,
             deprecated_message: None,
+            ..Default::default()
         };
 
         let claim_modules = [
@@ -3619,6 +3627,7 @@ output "bucket2__list_of_strings" {
             tf_providers: vec![example_provider_aws()],
             deprecated: false,
             deprecated_message: None,
+            ..Default::default()
         };
 
         let claim_modules = [
@@ -3731,6 +3740,7 @@ output "bucket2__list_of_strings" {
             tf_providers: vec![example_provider_aws()],
             deprecated: false,
             deprecated_message: None,
+            ..Default::default()
         };
 
         // ModuleResp for the EC2 instance.
@@ -3794,6 +3804,7 @@ output "bucket2__list_of_strings" {
             tf_providers: vec![example_provider_aws()],
             deprecated: false,
             deprecated_message: None,
+            ..Default::default()
         };
 
         let claim_modules = [
@@ -3876,6 +3887,7 @@ output "bucket2__list_of_strings" {
                 tf_providers: vec![example_provider_aws()],
                 deprecated: false,
                 deprecated_message: None,
+                ..Default::default()
             },
         )];
 
@@ -3951,6 +3963,7 @@ output "bucket2__list_of_strings" {
                 tf_providers: vec![example_provider_aws()],
                 deprecated: false,
                 deprecated_message: None,
+                ..Default::default()
             },
         )];
 
@@ -4101,6 +4114,7 @@ output "bucket2__list_of_strings" {
             tf_providers: vec![example_provider_aws()],
             deprecated: false,
             deprecated_message: None,
+            ..Default::default()
         }
     }
 
@@ -4146,6 +4160,7 @@ output "bucket2__list_of_strings" {
             },
             tf_variables: Vec::with_capacity(0),
             tf_extra_environment_variables: Vec::with_capacity(0),
+            ..Default::default()
         }
     }
 }

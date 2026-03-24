@@ -472,6 +472,7 @@ pub async fn publish_module_from_zip(
         memory: module_yaml.spec.memory.unwrap_or_else(get_default_memory),
         deprecated: false,
         deprecated_message: None,
+        yanked: false,
     };
 
     let all_regions = handler.get_all_regions().await?;
@@ -1255,6 +1256,7 @@ bucketName: some-bucket-name
                 tf_variables: Vec::with_capacity(0),
                 tf_extra_environment_variables: Vec::with_capacity(0),
                 s3_key: "".to_string(),
+                ..Default::default()
             },
             ProviderResp {
                 name: "aws2".to_string(),
@@ -1279,6 +1281,7 @@ bucketName: some-bucket-name
                 tf_variables: Vec::with_capacity(0),
                 tf_extra_environment_variables: Vec::with_capacity(0),
                 s3_key: "".to_string(),
+                ..Default::default()
             },
         ];
         validate_providers(&tf_providers);
@@ -1310,6 +1313,7 @@ bucketName: some-bucket-name
                 tf_variables: Vec::with_capacity(0),
                 tf_extra_environment_variables: Vec::with_capacity(0),
                 s3_key: "".to_string(),
+                ..Default::default()
             },
             ProviderResp {
                 name: "aws2".to_string(),
@@ -1334,6 +1338,7 @@ bucketName: some-bucket-name
                 tf_variables: Vec::with_capacity(0),
                 tf_extra_environment_variables: Vec::with_capacity(0),
                 s3_key: "".to_string(),
+                ..Default::default()
             },
         ];
         validate_providers(&tf_providers);
@@ -1366,6 +1371,7 @@ bucketName: some-bucket-name
                 tf_variables: Vec::with_capacity(0),
                 tf_extra_environment_variables: Vec::with_capacity(0),
                 s3_key: "".to_string(),
+                ..Default::default()
             },
             ProviderResp {
                 name: "aws2".to_string(),
@@ -1390,6 +1396,7 @@ bucketName: some-bucket-name
                 tf_variables: Vec::with_capacity(0),
                 tf_extra_environment_variables: Vec::with_capacity(0),
                 s3_key: "".to_string(),
+                ..Default::default()
             },
         ];
         validate_providers(&tf_providers);

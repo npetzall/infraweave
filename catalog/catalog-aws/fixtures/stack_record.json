@@ -1,0 +1,45 @@
+{
+  "track": "stable",
+  "track_version": "0.2.0",
+  "version": "0.2.0",
+  "timestamp": "2024-01-16T12:00:00Z",
+  "module_name": "BucketCollection",
+  "module": "bucketcollection",
+  "module_type": "stack",
+  "description": "Stack of S3 buckets",
+  "reference": "myorg/bucketcollection",
+  "manifest": {
+    "metadata": { "name": "bucketcollection" },
+    "apiVersion": "v1",
+    "kind": "Stack",
+    "spec": {
+      "moduleName": "BucketCollection",
+      "stackName": "BucketCollection",
+      "version": "0.2.0",
+      "description": "Stack of S3 buckets",
+      "reference": "myorg/bucketcollection",
+      "examples": null,
+      "cpu": null,
+      "memory": null,
+      "locals": null,
+      "dependencies": null,
+      "stackVariableDefinitions": null
+    }
+  },
+  "tf_variables": [],
+  "tf_outputs": [],
+  "tf_providers": [],
+  "tf_required_providers": [],
+  "tf_lock_providers": [],
+  "tf_extra_environment_variables": [],
+  "s3_key": "modules/stable/bucketcollection/000.002.000/bucketcollection.zip",
+  "oci_artifact_set": null,
+  "stack_data": {
+    "modules": []
+  },
+  "version_diff": null,
+  "cpu": "256",
+  "memory": "512",
+  "deprecated": false,
+  "deprecated_message": null
+}

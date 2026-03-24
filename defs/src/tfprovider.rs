@@ -2,7 +2,7 @@ use crate::TfVariable;
 use serde::{Deserialize, Serialize};
 
 #[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, Default)]
 pub struct ProviderManifest {
     pub metadata: Metadata,
     #[serde(rename = "apiVersion")]
@@ -12,14 +12,14 @@ pub struct ProviderManifest {
 }
 
 #[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct Metadata {
     pub name: String,
 }
 
 // This struct represents the actual spec part of the manifest
 #[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, Default)]
 pub struct ProviderSpec {
     pub provider: String,
     pub alias: Option<String>,
@@ -40,7 +40,7 @@ impl ProviderSpec {
 
 // Wrapped of the ProviderManifest to with some metadata
 #[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, Default)]
 pub struct ProviderResp {
     pub name: String,
     pub version: String,
@@ -53,4 +53,10 @@ pub struct ProviderResp {
     #[serde(default)]
     pub tf_extra_environment_variables: Vec<String>,
     pub s3_key: String,
+    #[serde(default)]
+    pub deprecated: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub deprecated_message: Option<String>,
+    #[serde(default)]
+    pub yanked: bool,
 }

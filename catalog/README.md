@@ -1,76 +1,140 @@
-# Catalog
+# Catalog workspace
 
-`catalog` provides the high-level interface for working with InfraWeave catalog entries:
-providers, modules, and stacks.
+Rust crates under **`catalog/`** for the **catalog** domain: a shared [`catalog-trait`](catalog-trait) contract, HTTP and AWS surfaces, in-memory test doubles, and client helpers used by tools (for example a CLI). These crates are workspace members of the repo root [`Cargo.toml`](../Cargo.toml) (`catalog/catalog-*`).
 
-A catalog entry consists of:
-- immutable binary content (for example zip/tar.gz bytes)
-- associated metadata (that can evolve over time, independently from the bytes)
+Trait-level API (read/management types and methods) is documented in [`catalog-trait/README.md`](catalog-trait/README.md). The AWS backend has operator-oriented notes in [`catalog-aws/docs/`](catalog-aws/docs/).
 
-## Design intent
+## Crates at a glance
 
-The crate is centered around the `Catalog` trait, which models common operations across all catalog kinds:
+| Crate | Role |
+|--------|------|
+| [`catalog-trait`](catalog-trait) | `Catalog` / read / management traits and shared types. Everything else depends on this. |
+| [`catalog-aws`](catalog-aws) | Production backend: DynamoDB + S3 (implements the trait). |
+| [`catalog-mem`](catalog-mem) | In-process store for tests and local dev (implements the trait). |
+| [`catalog-http`](catalog-http) | Axum router exposing the catalog as JSON/REST (`/catalog/health`, `/catalog/v1/...`). **Does not** pick a backend—it is wired with any `Catalog` implementation. |
+| [`catalog-client-aws-http`](catalog-client-aws-http) | Remote `Catalog` over HTTP: speaks the same REST contract as `catalog-http` (works behind API Gateway). |
+| [`catalog-client`](catalog-client) | Caller-side helpers: [`CatalogClient`](catalog-client/src/client.rs) wraps any `Catalog` and normalizes `download_*` [`ContentSource`](catalog-trait/src/read.rs) to in-memory bytes; [`materialize_content`](catalog-client/src/content.rs) resolves URL/path sources to owned bytes. |
+| [`catalog-aws-apigw`](catalog-aws-apigw) | Lambda-oriented crate that hosts `catalog-http` and selects **`catalog-aws`** or **`catalog-mem`** via Cargo features (`aws` default, `mem` for tests). Ships the **`bootstrap`** binary expected by API Gateway + Lambda deployments. See [`catalog-aws-apigw/README.md`](catalog-aws-apigw/README.md). |
 
-1. Create a new version (metadata + bytes) with `add_*`
-2. Evolve entry availability/state via `promote` / `deprecate` / `yank` and `promote_*` / `deprecate_*` / `yank_*`
-3. Fetch versions (`get` / `get_*`) and access the immutable binary content (`download_*`)
-4. Perform unified listing queries via `list` / `list_providers` / `list_modules` / `list_stacks`
-5. Attach and download additional binary artifacts (for example build info or attestations)
+## Conceptual layering
 
-## Key APIs
+```mermaid
+flowchart TB
+    subgraph consumers["Consumers (e.g. CLI)"]
+        App["Application code"]
+        CC["catalog-client\n(CatalogClient)"]
+    end
 
-### `Catalog` trait
+    subgraph impls["Catalog implementations"]
+        MEM["catalog-mem"]
+        AWS["catalog-aws"]
+        HTTP_CLI["catalog-client-aws-http\n(AwsHttpCatalog)"]
+    end
 
-Defined in `catalog/src/lib.rs`, it includes methods for:
-- Providers: `add_provider`, `promote_provider`, `deprecate_provider`, `yank_provider`, `get_provider`, `download_provider`
-- Modules: `add_module`, `promote_module`, `deprecate_module`, `yank_module`, `get_module`, `download_module`
-- Stacks: `add_stack`, `promote_stack`, `deprecate_stack`, `yank_stack`, `get_stack`, `download_stack`
-- Management: `promote`, `deprecate`, `yank` (unified) and convenience helpers `promote_provider|module|stack`, `deprecate_provider|module|stack`, `yank_provider|module|stack`
-- Fetching: `get` (unified) and convenience helpers `get_provider`, `get_module`, `get_stack`
-- Listing: `list`, plus convenience helpers `list_providers`, `list_modules`, `list_stacks`
-- Attachments: `add_attachment`, `list_attachments`, `download_attachment`
+    subgraph server["HTTP server (often inside catalog-aws-apigw on Lambda)"]
+        CH["catalog-http\n(Axum router)"]
+    end
 
-### `catalog_types` (shared data structures)
+    TRAIT["catalog-trait\n(Catalog)"]
 
-The crate also defines the shared placeholder types used by the `Catalog` trait:
-- `CatalogRef` (opaque catalog reference)
-- `Metadata` (common catalog metadata)
-- `TerraformInterface` (unified view of Terraform-related inputs/outputs)
-- `ContentSource` (`Url`, `Path`, or `Bytes`)
-- `Provider`, `Module`, `Stack`
-- `CatalogKind`, `Query`, `CatalogEntry`
-- `VersionSelector` (`Latest` or `Exact(...)`)
+    App --> CC
+    CC --> TRAIT
+    CC -.->|"wraps (e.g. remote)"| HTTP_CLI
+    MEM --> TRAIT
+    AWS --> TRAIT
+    HTTP_CLI --> TRAIT
+    CH --> TRAIT
 
-## For Implementors
+    HTTP_CLI -.->|"HTTPS /catalog/... \n(health, /catalog/v1/..., etc.)"| CH
+```
 
-Consumers are expected to depend on `catalog` for the interface, while specific runtimes/backends should implement the `Catalog` trait (for example, the `catalog-aws` crate is intended to host an AWS-backed implementation).
+- **Trait boundary**: `catalog-trait` is the only shared API between “callers” and “backends.”
+- **`catalog-client`** sits on the **caller** side: it wraps whatever implements the trait (in-memory, HTTP client, etc.).
+- **`catalog-http`** sits on the **server** side: it adapts HTTP to the same trait.
 
-### Pagination Requirements
+## Production-style wiring (remote catalog)
 
-Catalog listing APIs (`list`, `list_providers`, `list_modules`, `list_stacks`) return a page envelope (`{ items, next }`) supporting pagination via a `limit` and an opaque `next` continuation token.
+In deployment, HTTP clients do not talk to `catalog-aws` directly. Traffic goes through API Gateway to a Lambda (or other host) that runs **`catalog-http`** backed by **`catalog-aws`**.
 
-Implementations MUST ensure pagination is deterministic across calls:
-- results MUST be ordered by a **stable, deterministic sort key**.
-- the `next` token MUST correspond to (and resume from) the backend’s “last evaluated key” for that sort key.
-- when server-side truncation occurs, implementations MUST return `next` so clients can resume; when the result is complete, `next` MUST be absent.
+```mermaid
+sequenceDiagram
+    participant CLI as CLI / tool
+    participant CC as catalog-client
+    participant ACH as catalog-client-aws-http
+    participant GW as AWS API Gateway
+    participant L as Lambda (catalog-aws-apigw / bootstrap)
+    participant CH as catalog-http
+    participant CA as catalog-aws
 
-### List Projections Requirements
+    CLI->>CC: catalog operations
+    CC->>ACH: delegate (AwsHttpCatalog inner)
+    ACH->>GW: HTTPS /catalog/...
+    GW->>L: invoke (HTTP API v2 event)
+    L->>CH: Axum dispatch via lambda_http
+    CH->>CA: trait calls
+    CA-->>CH: data / errors
+    CH-->>L: Axum response
+    L-->>GW: Lambda proxy response
+    GW-->>ACH: HTTPS + body
+    ACH-->>CC: parsed trait results
+    CC-->>CLI: …
+```
 
-Listing APIs (`list`, `list_providers`, `list_modules`, `list_stacks`) support typed payload reduction via `catalog_types::Query.projection`.
+`catalog-aws-apigw` is the usual place this is assembled: it depends on `catalog-http` and, with the default **`aws`** feature, on `catalog-aws` for persistence. Build with **`--no-default-features --features mem`** when you want the same Lambda shape without the AWS SDK (see the crate README).
 
-`Query.projection` semantics (typed contract):
-- `Query.projection == None` means "Full" and implementations SHOULD populate all supported projected fields (using `Some(...)` in the corresponding response `Option<...>` fields).
-- `Query.projection == Some(mask)` means "Only populate fields included in `mask`":
-  - If `mask` includes `metadata`, then `Provider|Module|Stack.metadata` SHOULD be `Some(...)`; otherwise it SHOULD be `None`.
-  - If `mask` includes `manifest`, then `Provider|Module|Stack.manifest` SHOULD be `Some(...)`; otherwise it SHOULD be `None`.
-  - If `mask` includes `terraform`, then `Provider|Module|Stack.terraform` SHOULD be `Some(...)`; otherwise it SHOULD be `None`.
-  - If `mask` includes `version_diff`, then `Provider|Module|Stack.version_diff` SHOULD be `Some(...)`; otherwise it SHOULD be `None`.
-  - If `mask` includes `stack_data`, then `Stack.stack_data` SHOULD be `Some(...)`; otherwise it SHOULD be `None`.
+## Local / test wiring
 
-Notes:
-- `Provider` and `Module` do not include `stack_data` in their response types, so the projection naturally cannot request it for those kinds.
+For tests you want **deterministic, fast** behavior without AWS. Two common patterns:
 
-### Replication / availability across deployments
+### A. Full HTTP stack, in-memory backend
 
-The `Catalog` layer is responsible for ensuring catalog data (metadata and associated immutable content) is available across different deployment scopes, such as subscriptions, regions, and availability zones. Any required replication, distribution, or synchronization across those scopes is an implementation concern of the catalog backend, so callers can treat `get_*` / `download_*` as working consistently from their target environment.
+Run **`catalog-http`** with **`catalog-mem`** as the trait implementation (same routes and serialization as production; no network to AWS). The `catalog-aws-apigw` crate can be built with the **`mem`** feature for a Lambda-shaped host that uses `catalog-mem` instead of `catalog-aws`.
 
+```mermaid
+flowchart LR
+    T["Tests / local server"]
+    CH["catalog-http"]
+    MEM["catalog-mem"]
+
+    T --> CH
+    CH --> MEM
+```
+
+### B. No HTTP: trait directly in-process
+
+Point **`catalog-client`** (and your code under test) at **`catalog-mem`** directly. No `catalog-http`, no API Gateway—ideal for unit tests and fast integration tests that only need the catalog contract.
+
+```mermaid
+flowchart LR
+    T["Tests"]
+    CC["catalog-client"]
+    MEM["catalog-mem"]
+
+    T --> CC
+    CC --> MEM
+```
+
+`catalog-client-aws-http`’s own tests use this style: they spin up `catalog-http` over `catalog-mem` with Axum/tower to exercise the HTTP client against a real router.
+
+## Choosing a path
+
+| Goal | Catalog implementation | Notes |
+|------|------------------------|--------|
+| Production remote access | `catalog-client-aws-http` → gateway URL | Matches deployed REST contract. |
+| Production service | `catalog-http` + `catalog-aws` | Often via `catalog-aws-apigw` (`bootstrap`) behind API Gateway. |
+| HTTP contract tests | `catalog-http` + `catalog-mem` | Same paths and payloads as prod, no AWS. |
+| Fast in-process tests | `catalog-mem` only | Use with or without `catalog-client` helpers. |
+
+## Build and test (from repo root)
+
+```bash
+cargo test -p catalog-trait
+cargo test -p catalog-http
+cargo test -p catalog-client-aws-http
+# Lambda crate: library tests without AWS SDK
+cargo test -p catalog-aws-apigw --no-default-features
+# Default features include AWS roundtrips where applicable
+cargo test -p catalog-aws-apigw
+```
+
+All of these paths converge on **`catalog-trait`**: keep new backends and clients aligned with that API so tools can swap implementations without changing their core logic.

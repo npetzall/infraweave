@@ -1718,6 +1718,7 @@ mod tests {
                 memory: "2048".to_string(),
                 deprecated: false,
                 deprecated_message: None,
+                ..Default::default()
             },
             &DeploymentResp {
                 epoch: 0,

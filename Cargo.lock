@@ -1043,6 +1043,22 @@ dependencies = [
 
 [[package]]
 name = "aws_lambda_events"
+version = "0.15.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7319a086b79c3ff026a33a61e80f04fd3885fbb73237981ea080d21944e1cb1c"
+dependencies = [
+ "base64 0.22.1",
+ "bytes",
+ "http 1.3.1",
+ "http-body 1.0.1",
+ "http-serde",
+ "query_map",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "aws_lambda_events"
 version = "0.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "52ddb91585253ccc85be3f2e0d5635529efdeadaf8a1da3230b433d3bbe43648"
@@ -1095,6 +1111,40 @@ dependencies = [
 
 [[package]]
 name = "axum"
+version = "0.7.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "edca88bc138befd0323b20752846e6587272d3b03b0343c8ea28a6f819e6e71f"
+dependencies = [
+ "async-trait",
+ "axum-core 0.4.5",
+ "bytes",
+ "futures-util",
+ "http 1.3.1",
+ "http-body 1.0.1",
+ "http-body-util",
+ "hyper 1.7.0",
+ "hyper-util",
+ "itoa",
+ "matchit 0.7.3",
+ "memchr",
+ "mime",
+ "percent-encoding",
+ "pin-project-lite",
+ "rustversion",
+ "serde",
+ "serde_json",
+ "serde_path_to_error",
+ "serde_urlencoded",
+ "sync_wrapper 1.0.2",
+ "tokio",
+ "tower 0.5.2",
+ "tower-layer",
+ "tower-service",
+ "tracing",
+]
+
+[[package]]
+name = "axum"
 version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6d6fd624c75e18b3b4c6b9caf42b1afe24437daaee904069137d8bab077be8b8"
@@ -1142,6 +1192,27 @@ dependencies = [
  "rustversion",
  "tower-layer",
  "tower-service",
+]
+
+[[package]]
+name = "axum-core"
+version = "0.4.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "09f2bd6146b97ae3359fa0cc6d6b376d9539582c7b4220f041a33ec24c226199"
+dependencies = [
+ "async-trait",
+ "bytes",
+ "futures-util",
+ "http 1.3.1",
+ "http-body 1.0.1",
+ "http-body-util",
+ "mime",
+ "pin-project-lite",
+ "rustversion",
+ "sync_wrapper 1.0.2",
+ "tower-layer",
+ "tower-service",
+ "tracing",
 ]
 
 [[package]]
@@ -1694,17 +1765,119 @@ dependencies = [
 ]
 
 [[package]]
-name = "catalog"
+name = "catalog-aws"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "aws-config",
+ "aws-sdk-dynamodb",
+ "aws-sdk-s3",
+ "base64 0.22.1",
+ "catalog-trait",
+ "log",
+ "semver",
+ "serde",
+ "serde_dynamo",
+ "serde_json",
+ "serde_yaml 0.8.26",
+ "tokio",
+]
+
+[[package]]
+name = "catalog-aws-apigw"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "axum 0.7.9",
+ "catalog-aws",
+ "catalog-http",
+ "catalog-mem",
+ "catalog-trait",
+ "http 1.3.1",
+ "lambda_http",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tower 0.5.2",
+ "tracing",
+ "tracing-subscriber",
+]
+
+[[package]]
+name = "catalog-client"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "catalog-trait",
+ "reqwest 0.12.24",
+ "tokio",
+]
+
+[[package]]
+name = "catalog-client-aws-http"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "axum 0.7.9",
+ "catalog-client",
+ "catalog-http",
+ "catalog-mem",
+ "catalog-trait",
+ "percent-encoding",
+ "reqwest 0.12.24",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tower 0.5.2",
+]
+
+[[package]]
+name = "catalog-http"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "axum 0.7.9",
+ "catalog-trait",
+ "http 1.3.1",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tower 0.5.2",
+ "tracing",
+ "utoipa 4.2.3",
+ "utoipa-swagger-ui 7.1.0",
+]
+
+[[package]]
+name = "catalog-mem"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "base64 0.22.1",
+ "catalog-trait",
+ "semver",
+ "serde",
+ "serde_json",
+ "tokio",
+ "uuid",
+]
+
+[[package]]
+name = "catalog-trait"
 version = "0.1.0"
 dependencies = [
  "anyhow",
  "async-trait",
  "env_defs",
+ "serde",
+ "serde_json",
 ]
-
-[[package]]
-name = "catalog-aws"
-version = "0.1.0"
 
 [[package]]
 name = "cbc"
@@ -1897,7 +2070,7 @@ dependencies = [
  "serde_yaml 0.8.26",
  "tokio",
  "url",
- "utoipa",
+ "utoipa 5.3.1",
  "webserver-openapi",
 ]
 
@@ -2948,7 +3121,7 @@ dependencies = [
  "serde_yaml 0.8.26",
  "thiserror 1.0.69",
  "tokio",
- "utoipa",
+ "utoipa 5.3.1",
  "walkdir",
 ]
 
@@ -3542,7 +3715,7 @@ dependencies = [
  "anyhow",
  "aws-config",
  "aws-sdk-ssm",
- "aws_lambda_events",
+ "aws_lambda_events 0.16.0",
  "base64 0.22.1",
  "chrono",
  "env_common",
@@ -3718,7 +3891,7 @@ dependencies = [
  "fnv",
  "hcl-primitives",
  "vecmap-rs",
- "winnow",
+ "winnow 0.7.15",
 ]
 
 [[package]]
@@ -4419,7 +4592,7 @@ dependencies = [
  "serde_json",
  "tokio",
  "url",
- "utoipa",
+ "utoipa 5.3.1",
  "webserver-openapi",
 ]
 
@@ -4976,6 +5149,33 @@ dependencies = [
 ]
 
 [[package]]
+name = "lambda_http"
+version = "0.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "67fe279be7f89f5f72c97c3a96f45c43db8edab1007320ecc6a5741273b4d6db"
+dependencies = [
+ "aws_lambda_events 0.15.1",
+ "base64 0.22.1",
+ "bytes",
+ "encoding_rs",
+ "futures",
+ "futures-util",
+ "http 1.3.1",
+ "http-body 1.0.1",
+ "http-body-util",
+ "hyper 1.7.0",
+ "lambda_runtime",
+ "mime",
+ "percent-encoding",
+ "pin-project-lite",
+ "serde",
+ "serde_json",
+ "serde_urlencoded",
+ "tokio-stream",
+ "url",
+]
+
+[[package]]
 name = "lambda_runtime"
 version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5418,6 +5618,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "nu-ansi-term"
+version = "0.50.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7957b9740744892f114936ab4a57b3f487491bbeafaf8083688b16841a4240e5"
+dependencies = [
+ "windows-sys 0.61.2",
+]
+
+[[package]]
 name = "num"
 version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5517,6 +5726,28 @@ checksum = "071dfc062690e90b734c0b2273ce72ad0ffa95f0c74596bc250dcfd960262841"
 dependencies = [
  "autocfg",
  "libm",
+]
+
+[[package]]
+name = "num_enum"
+version = "0.7.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5d0bca838442ec211fa11de3a8b0e0e8f3a4522575b5c4c06ed722e005036f26"
+dependencies = [
+ "num_enum_derive",
+ "rustversion",
+]
+
+[[package]]
+name = "num_enum_derive"
+version = "0.7.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "680998035259dcfcafe653688bf2aa6d3e2dc05e98be6ab46afb089dc84f1df8"
+dependencies = [
+ "proc-macro-crate",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.90",
 ]
 
 [[package]]
@@ -6380,6 +6611,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "353e1ca18966c16d9deb1c69278edbc5f194139612772bd9537af60ac231e1e6"
 dependencies = [
  "elliptic-curve 0.13.8",
+]
+
+[[package]]
+name = "proc-macro-crate"
+version = "3.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "219cb19e96be00ab2e37d6e299658a0cfa83e52429179969b0f0121b4ac46983"
+dependencies = [
+ "toml_edit",
 ]
 
 [[package]]
@@ -7839,6 +8079,7 @@ version = "4.2.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e36c1b1792cfd9de29eb373ee6a4b74650369c096f55db7198ceb7b8921d1f7f"
 dependencies = [
+ "aws-sdk-dynamodb",
  "base64 0.21.7",
  "serde",
 ]
@@ -8813,6 +9054,36 @@ dependencies = [
 ]
 
 [[package]]
+name = "toml_datetime"
+version = "0.7.5+spec-1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "92e1cfed4a3038bc5a127e35a2d360f145e1f4b971b551a2ba5fd7aedf7e1347"
+dependencies = [
+ "serde_core",
+]
+
+[[package]]
+name = "toml_edit"
+version = "0.23.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c2ad0b7ae9cfeef5605163839cb9221f453399f15cfb5c10be9885fcf56611f9"
+dependencies = [
+ "indexmap 2.7.0",
+ "toml_datetime",
+ "toml_parser",
+ "winnow 0.7.15",
+]
+
+[[package]]
+name = "toml_parser"
+version = "1.0.10+spec-1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7df25b4befd31c4816df190124375d5a20c6b6921e2cad937316de3fccd63420"
+dependencies = [
+ "winnow 1.0.0",
+]
+
+[[package]]
 name = "tonic"
 version = "0.14.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8989,6 +9260,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "tracing-log"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ee855f1f400bd0e5c02d150ae5de3840039a3f54b025156404e34c23c03f47c3"
+dependencies = [
+ "log",
+ "once_cell",
+ "tracing-core",
+]
+
+[[package]]
 name = "tracing-serde"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -9005,14 +9287,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2054a14f5307d601f88daf0553e1cbf472acc4f2c51afab632431cdcd72124d5"
 dependencies = [
  "matchers",
+ "nu-ansi-term",
  "once_cell",
  "regex-automata",
  "serde",
  "serde_json",
  "sharded-slab",
+ "smallvec",
  "thread_local",
  "tracing",
  "tracing-core",
+ "tracing-log",
  "tracing-serde",
 ]
 
@@ -9309,6 +9594,18 @@ checksum = "06abde3611657adf66d383f00b093d7faecc7fa57071cce2578660c9f1010821"
 
 [[package]]
 name = "utoipa"
+version = "4.2.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c5afb1a60e207dca502682537fefcfd9921e71d0b83e9576060f09abc6efab23"
+dependencies = [
+ "indexmap 2.7.0",
+ "serde",
+ "serde_json",
+ "utoipa-gen 4.3.1",
+]
+
+[[package]]
+name = "utoipa"
 version = "5.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "435c6f69ef38c9017b4b4eea965dfb91e71e53d869e896db40d1cf2441dd75c0"
@@ -9316,7 +9613,20 @@ dependencies = [
  "indexmap 2.7.0",
  "serde",
  "serde_json",
- "utoipa-gen",
+ "utoipa-gen 5.3.1",
+]
+
+[[package]]
+name = "utoipa-gen"
+version = "4.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "20c24e8ab68ff9ee746aad22d39b5535601e6416d1b0feeabf78be986a5c4392"
+dependencies = [
+ "proc-macro-error",
+ "proc-macro2",
+ "quote",
+ "regex",
+ "syn 2.0.90",
 ]
 
 [[package]]
@@ -9340,7 +9650,25 @@ dependencies = [
  "axum 0.8.1",
  "serde",
  "serde_json",
- "utoipa",
+ "utoipa 5.3.1",
+]
+
+[[package]]
+name = "utoipa-swagger-ui"
+version = "7.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "943e0ff606c6d57d410fd5663a4d7c074ab2c5f14ab903b9514565e59fa1189e"
+dependencies = [
+ "axum 0.7.9",
+ "mime_guess",
+ "regex",
+ "reqwest 0.12.24",
+ "rust-embed",
+ "serde",
+ "serde_json",
+ "url",
+ "utoipa 4.2.3",
+ "zip 1.1.4",
 ]
 
 [[package]]
@@ -9357,7 +9685,7 @@ dependencies = [
  "serde",
  "serde_json",
  "url",
- "utoipa",
+ "utoipa 5.3.1",
  "zip 2.3.0",
 ]
 
@@ -9692,9 +10020,9 @@ dependencies = [
  "tokio",
  "tower 0.4.13",
  "tower-http",
- "utoipa",
+ "utoipa 5.3.1",
  "utoipa-redoc",
- "utoipa-swagger-ui",
+ "utoipa-swagger-ui 9.0.0",
 ]
 
 [[package]]
@@ -10105,12 +10433,18 @@ checksum = "d6bbff5f0aada427a1e5a6da5f1f98158182f26556f345ac9e04d36d0ebed650"
 
 [[package]]
 name = "winnow"
-version = "0.7.4"
+version = "0.7.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0e97b544156e9bebe1a0ffbc03484fc1ffe3100cbce3ffb17eac35f7cdd7ab36"
+checksum = "df79d97927682d2fd8adb29682d1140b343be4ac0f08fd68b7765d9c059d3945"
 dependencies = [
  "memchr",
 ]
+
+[[package]]
+name = "winnow"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a90e88e4667264a994d34e6d1ab2d26d398dcdca8b7f52bec8668957517fc7d8"
 
 [[package]]
 name = "winreg"
@@ -10446,6 +10780,22 @@ dependencies = [
  "sha1",
  "time",
  "zstd 0.11.2+zstd.1.5.2",
+]
+
+[[package]]
+name = "zip"
+version = "1.1.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9cc23c04387f4da0374be4533ad1208cbb091d5c11d070dfef13676ad6497164"
+dependencies = [
+ "arbitrary",
+ "crc32fast",
+ "crossbeam-utils",
+ "displaydoc",
+ "flate2",
+ "indexmap 2.7.0",
+ "num_enum",
+ "thiserror 1.0.69",
 ]
 
 [[package]]

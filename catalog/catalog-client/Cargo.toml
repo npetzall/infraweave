@@ -1,0 +1,15 @@
+[package]
+name = "catalog-client"
+version.workspace = true
+edition.workspace = true
+description = "Helpers for catalog-trait consumers (e.g. materialize ContentSource to bytes)."
+
+[dependencies]
+anyhow = { workspace = true }
+async-trait = { workspace = true }
+catalog-trait = { path = "../catalog-trait" }
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+tokio = { version = "1", features = ["fs", "rt-multi-thread"] }
+
+[lints]
+workspace = true
