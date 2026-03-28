@@ -67,10 +67,8 @@ pub async fn handle_destroy(
 
     // Warn if user wants to store files but didn't enable following
     if store_files && !follow {
-        eprintln!(
-            "Warning: --store-files requires --follow to be enabled. Files will not be stored."
-        );
-        eprintln!("Add --follow to enable file storage.");
+        error!("Warning: --store-files requires --follow to be enabled. Files will not be stored.");
+        error!("Add --follow to enable file storage.");
     }
 
     let job_id = match destroy_infra(
