@@ -14,6 +14,7 @@ fn config_for_test_has_local_mode() {
     assert_eq!(config.region, "us-west-2");
     assert!(config.dynamodb_endpoint.is_some());
     assert!(config.s3_endpoint.is_some());
+    assert_ne!(config.provider_mirror_bucket, config.providers_bucket);
 }
 
 #[test]

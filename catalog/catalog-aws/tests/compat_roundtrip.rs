@@ -42,7 +42,7 @@ fn provider_fixture_legacy_roundtrip() {
 fn module_fixture_legacy_roundtrip() {
     let item = load_fixture_as_item("module_record.json");
     let resp = read::item_to_module(&item).expect("deserialize");
-    let module = read::module_resp_to_module(&resp, None);
+    let module = read::module_resp_to_module(&resp, None, None);
     let legacy = catalog_module_to_legacy(&module);
     assert_eq!(resp, legacy);
 }
@@ -51,7 +51,7 @@ fn module_fixture_legacy_roundtrip() {
 fn stack_fixture_legacy_roundtrip() {
     let item = load_fixture_as_item("stack_record.json");
     let resp = read::item_to_module(&item).expect("deserialize");
-    let stack = read::module_resp_to_stack(&resp, None);
+    let stack = read::module_resp_to_stack(&resp, None, None);
     let legacy = catalog_stack_to_legacy(&stack);
     assert_resp_matches_stack_roundtrip(&resp, &legacy);
 }

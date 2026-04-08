@@ -59,3 +59,6 @@ docs/cli-reference.md
 .vscode/
 # Binary files for local docker builds
 binaries/
+
+# Local scratchpad for task notes / AI planning
+ai-task/

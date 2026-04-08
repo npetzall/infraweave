@@ -1,0 +1,45 @@
+[package]
+name = "catalog-aws-provider-mirror"
+version.workspace = true
+edition.workspace = true
+description = "AWS catalog provider mirror: resolve (lib) and Lambda populate worker (bin)."
+autobins = false
+
+[lib]
+path = "src/lib.rs"
+
+[features]
+default = []
+## Enables the `bootstrap` Lambda binary (`aws-config`, `lambda_runtime`, `tracing-subscriber`).
+lambda = [
+    "dep:aws-config",
+    "dep:lambda_runtime",
+    "dep:tracing-subscriber",
+]
+
+[dependencies]
+anyhow.workspace = true
+async-trait.workspace = true
+aws-config = { version = "1.5", features = ["behavior-version-latest"], optional = true }
+bytes = "1"
+catalog-trait = { path = "../catalog-trait" }
+log = "0.4"
+registry-client = { path = "../registry-client" }
+serde = { version = "1.0", features = ["derive"] }
+tempfile = "3"
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "fs", "sync"] }
+tracing = "0.1"
+
+aws-sdk-lambda = "1.60"
+aws-sdk-s3 = "1.65"
+lambda_runtime = { version = "0.13.0", optional = true }
+serde_json = "1.0"
+tracing-subscriber = { version = "0.3", optional = true, features = ["env-filter"] }
+
+[lints]
+workspace = true
+
+[[bin]]
+name = "bootstrap"
+path = "src/bin/bootstrap/main.rs"
+required-features = ["lambda"]

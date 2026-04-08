@@ -117,7 +117,8 @@ pub struct Module {
     pub metadata: Option<Metadata>,
     pub manifest: Option<ModuleManifest>,
     pub terraform: Option<TerraformInterface>,
-    /// Relative mirror destinations (`/` in JSON) → artifact source.
+    /// Best-effort mirror URLs derived by the backend (e.g. presigned S3). Omissions are expected;
+    /// clients must use [`TerraformInterface`](crate::types::TerraformInterface) lockfile providers and the public registry as source of truth.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub provider_mirror: Option<HashMap<PathBuf, ContentSource>>,
 }
@@ -142,7 +143,8 @@ pub struct Stack {
     pub manifest: Option<StackManifest>,
     pub terraform: Option<TerraformInterface>,
     pub stack_data: Option<ModuleStackData>,
-    /// Relative mirror destinations (`/` in JSON) → artifact source.
+    /// Best-effort mirror URLs derived by the backend (e.g. presigned S3). Omissions are expected;
+    /// clients must use [`TerraformInterface`](crate::types::TerraformInterface) lockfile providers and the public registry as source of truth.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub provider_mirror: Option<HashMap<PathBuf, ContentSource>>,
 }

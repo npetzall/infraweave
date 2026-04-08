@@ -39,7 +39,7 @@ fn provider_fixture_maps_to_catalog_provider() {
 fn module_fixture_maps_to_catalog_module() {
     let item = load_fixture_as_item("module_record.json");
     let resp = read::item_to_module(&item).expect("deserialize ModuleResp");
-    let module = read::module_resp_to_module(&resp, None);
+    let module = read::module_resp_to_module(&resp, None, None);
 
     assert_eq!(
         module.reference.id,
@@ -55,7 +55,7 @@ fn module_fixture_maps_to_catalog_module() {
 fn stack_fixture_maps_to_catalog_stack() {
     let item = load_fixture_as_item("stack_record.json");
     let resp = read::item_to_module(&item).expect("deserialize ModuleResp");
-    let stack = read::module_resp_to_stack(&resp, None);
+    let stack = read::module_resp_to_stack(&resp, None, None);
 
     assert_eq!(
         stack.reference.id,
@@ -70,7 +70,7 @@ fn stack_fixture_maps_to_catalog_stack() {
 fn projection_restricts_fields() {
     let item = load_fixture_as_item("module_record.json");
     let resp = read::item_to_module(&item).expect("deserialize");
-    let module = read::module_resp_to_module(&resp, Some(ProjectionFields::METADATA));
+    let module = read::module_resp_to_module(&resp, Some(ProjectionFields::METADATA), None);
 
     assert!(module.metadata.is_some());
     assert!(module.manifest.is_none());

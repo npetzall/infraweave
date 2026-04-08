@@ -12,6 +12,7 @@ pub mod compat_models;
 mod config;
 mod errors;
 mod management;
+pub mod mirror;
 mod ops;
 pub mod read;
 mod telemetry;
@@ -25,11 +26,15 @@ pub use errors::CatalogError;
 pub use telemetry::{record_operation, with_telemetry, LatencyBucket, Outcome};
 
 use async_trait::async_trait;
-use catalog_trait::read::{CatalogEntry, ContentSource, Page, Query};
+use catalog_trait::read::{CatalogEntry, ContentSource, Page, ProjectionFields, Query};
 use catalog_trait::types::{
     CatalogKind, CatalogRef, Metadata, TerraformInterface, VersionSelector,
 };
-use catalog_trait::{CatalogManagement, CatalogPopulate, CatalogRead};
+use catalog_trait::{
+    CatalogManagement, CatalogPopulate, CatalogProviderMirrorResolve, CatalogRead, TfLockProvider,
+};
+use std::collections::HashMap;
+use std::path::PathBuf;
 use std::sync::Arc;
 
 /// AWS-backed catalog implementation.
@@ -136,6 +141,25 @@ impl CatalogRead for AwsCatalog {
 }
 
 impl AwsCatalog {
+    async fn compute_provider_mirror_map(
+        &self,
+        r: &compat_models::ModuleResp,
+    ) -> HashMap<PathBuf, ContentSource> {
+        let providers: Vec<TfLockProvider> = r
+            .tf_lock_providers
+            .iter()
+            .map(|p| TfLockProvider {
+                source: p.source.clone(),
+                version: p.version.clone(),
+            })
+            .collect();
+        self.clients
+            .provider_mirror
+            .resolve_provider_mirror(&providers, "")
+            .await
+            .unwrap_or_default()
+    }
+
     async fn list_impl(
         &self,
         kind: CatalogKind,
@@ -145,6 +169,10 @@ impl AwsCatalog {
         let (items, last_key) = ops::execute_list(&self.clients, config, kind, query).await?;
 
         let projection = query.projection;
+        let full = projection.is_none() || projection == Some(ProjectionFields::ALL);
+        let proj = projection.unwrap_or(ProjectionFields::ALL);
+        let want_provider_mirror = full || proj.contains(ProjectionFields::PROVIDER_MIRROR);
+
         let entries: Vec<CatalogEntry> = match kind {
             CatalogKind::Provider => items
                 .iter()
@@ -154,22 +182,44 @@ impl AwsCatalog {
                     })
                 })
                 .collect(),
-            CatalogKind::Module => items
-                .iter()
-                .filter_map(|item| {
-                    read::item_to_module(item)
-                        .ok()
-                        .map(|r| CatalogEntry::Module(read::module_resp_to_module(&r, projection)))
-                })
-                .collect(),
-            CatalogKind::Stack => items
-                .iter()
-                .filter_map(|item| {
-                    read::item_to_module(item)
-                        .ok()
-                        .map(|r| CatalogEntry::Stack(read::module_resp_to_stack(&r, projection)))
-                })
-                .collect(),
+            CatalogKind::Module => {
+                let mut out = Vec::new();
+                for item in &items {
+                    let Ok(r) = read::item_to_module(item) else {
+                        continue;
+                    };
+                    let provider_mirror_arg = if want_provider_mirror {
+                        Some(self.compute_provider_mirror_map(&r).await)
+                    } else {
+                        None
+                    };
+                    out.push(CatalogEntry::Module(read::module_resp_to_module(
+                        &r,
+                        projection,
+                        provider_mirror_arg,
+                    )));
+                }
+                out
+            }
+            CatalogKind::Stack => {
+                let mut out = Vec::new();
+                for item in &items {
+                    let Ok(r) = read::item_to_module(item) else {
+                        continue;
+                    };
+                    let provider_mirror_arg = if want_provider_mirror {
+                        Some(self.compute_provider_mirror_map(&r).await)
+                    } else {
+                        None
+                    };
+                    out.push(CatalogEntry::Stack(read::module_resp_to_stack(
+                        &r,
+                        projection,
+                        provider_mirror_arg,
+                    )));
+                }
+                out
+            }
         };
 
         let next = last_key.and_then(|k| read::encode_next_token(&k));
@@ -228,8 +278,11 @@ impl AwsCatalog {
                         source: None,
                     }));
                 }
+                let mirror_map = self.compute_provider_mirror_map(&r).await;
                 Ok(Some(CatalogEntry::Module(read::module_resp_to_module(
-                    &r, projection,
+                    &r,
+                    projection,
+                    Some(mirror_map),
                 ))))
             }
             CatalogKind::Stack => {
@@ -241,8 +294,11 @@ impl AwsCatalog {
                         source: None,
                     }));
                 }
+                let mirror_map = self.compute_provider_mirror_map(&r).await;
                 Ok(Some(CatalogEntry::Stack(read::module_resp_to_stack(
-                    &r, projection,
+                    &r,
+                    projection,
+                    Some(mirror_map),
                 ))))
             }
         }

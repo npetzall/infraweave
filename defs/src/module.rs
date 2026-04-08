@@ -98,6 +98,57 @@ pub struct TfLockProvider {
     pub version: String,
 }
 
+impl TfLockProvider {
+    pub fn parse_source(&self) -> anyhow::Result<(&str, &str, &str)> {
+        let source = self.source.trim();
+        let parts: Vec<&str> = source.split('/').collect();
+        if parts.len() < 3 {
+            anyhow::bail!(
+            "provider source must have at least 3 segments (host/namespace/type), got {source:?}"
+        );
+        }
+        Ok((parts[0], parts[1], parts[2]))
+    }
+}
+
+#[cfg(test)]
+mod tf_lock_provider_parse_source_tests {
+    use super::TfLockProvider;
+
+    #[test]
+    fn source_parses_ok() {
+        let p = TfLockProvider {
+            source: "registry.opentofu.org/hashicorp/aws".to_string(),
+            version: "1".to_string(),
+        };
+        let (host, ns, typ) = p.parse_source().expect("parse");
+        assert_eq!(host, "registry.opentofu.org");
+        assert_eq!(ns, "hashicorp");
+        assert_eq!(typ, "aws");
+    }
+
+    #[test]
+    fn parse_tf_lock_provider_source_trims() {
+        let p = TfLockProvider {
+            source: "  registry.opentofu.org/hashicorp/aws  ".to_string(),
+            version: "1".to_string(),
+        };
+        let (host, ns, typ) = p.parse_source().expect("parse");
+        assert_eq!(host, "registry.opentofu.org");
+        assert_eq!(ns, "hashicorp");
+        assert_eq!(typ, "aws");
+    }
+
+    #[test]
+    fn parse_tf_lock_provider_source_rejects_short() {
+        let p = TfLockProvider {
+            source: "foo/bar".to_string(),
+            version: "1".to_string(),
+        };
+        assert!(p.parse_source().is_err());
+    }
+}
+
 #[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct ModuleDiffAddition {

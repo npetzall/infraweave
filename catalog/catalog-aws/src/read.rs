@@ -4,10 +4,11 @@
 
 use aws_sdk_dynamodb::types::AttributeValue;
 use base64::Engine;
-use catalog_trait::read::ProjectionFields;
+use catalog_trait::read::{ContentSource, ProjectionFields};
 use catalog_trait::types::{CatalogRef, Metadata, TerraformInterface};
 use catalog_trait::{ModuleManifest, StackManifest, StackMetadata, StackSpec};
 use std::collections::HashMap;
+use std::path::PathBuf;
 
 use crate::compat::{compat_module_resp_into_catalog, compat_provider_resp_into_catalog};
 use crate::compat_models::{ModuleResp, ProviderResp};
@@ -132,8 +133,9 @@ pub fn provider_resp_to_catalog(
 pub fn module_resp_to_module(
     r: &ModuleResp,
     projection: Option<ProjectionFields>,
+    provider_mirror_override: Option<HashMap<PathBuf, ContentSource>>,
 ) -> catalog_trait::read::Module {
-    let provider_mirror_src = r.provider_mirror.clone();
+    let stored_provider_mirror = r.provider_mirror.clone();
     let r = compat_module_resp_into_catalog(r.clone());
     let full = projection.is_none() || projection == Some(ProjectionFields::ALL);
     let proj = projection.unwrap_or(ProjectionFields::ALL);
@@ -176,7 +178,9 @@ pub fn module_resp_to_module(
     };
 
     let provider_mirror = if full || proj.contains(ProjectionFields::PROVIDER_MIRROR) {
-        provider_mirror_src
+        provider_mirror_override
+            .or(stored_provider_mirror)
+            .filter(|m| !m.is_empty())
     } else {
         None
     };
@@ -195,8 +199,9 @@ pub fn module_resp_to_module(
 pub fn module_resp_to_stack(
     r: &ModuleResp,
     projection: Option<ProjectionFields>,
+    provider_mirror_override: Option<HashMap<PathBuf, ContentSource>>,
 ) -> catalog_trait::read::Stack {
-    let provider_mirror_src = r.provider_mirror.clone();
+    let stored_provider_mirror = r.provider_mirror.clone();
     let r = compat_module_resp_into_catalog(r.clone());
     let full = projection.is_none() || projection == Some(ProjectionFields::ALL);
     let proj = projection.unwrap_or(ProjectionFields::ALL);
@@ -245,7 +250,9 @@ pub fn module_resp_to_stack(
     };
 
     let provider_mirror = if full || proj.contains(ProjectionFields::PROVIDER_MIRROR) {
-        provider_mirror_src
+        provider_mirror_override
+            .or(stored_provider_mirror)
+            .filter(|m| !m.is_empty())
     } else {
         None
     };

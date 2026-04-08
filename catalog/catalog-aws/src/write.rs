@@ -6,7 +6,10 @@
 use aws_sdk_dynamodb::types::{AttributeValue, Put, TransactWriteItem};
 use aws_sdk_s3::primitives::ByteStream;
 use catalog_trait::types::{Metadata, TerraformInterface};
-use catalog_trait::{ModuleManifest, ModuleResp, ProviderManifest, ProviderResp, StackManifest};
+use catalog_trait::{
+    CatalogProviderMirrorPopulate, ModuleManifest, ModuleResp, ProviderManifest, ProviderResp,
+    StackManifest,
+};
 use std::collections::HashMap;
 
 use crate::client::AwsClients;
@@ -313,6 +316,12 @@ pub async fn execute_add_provider(
     let provider = build_provider_resp(metadata, manifest, terraform, &s3_key);
     transact_provider(clients, config, &provider, &version_padded).await?;
 
+    clients
+        .provider_mirror
+        .ensure_providers_mirrored(&terraform.tf_lock_providers)
+        .await
+        .unwrap();
+
     Ok(catalog_trait::types::CatalogRef { id: s3_key })
 }
 
@@ -337,6 +346,12 @@ pub async fn execute_add_module(
 
     let module = build_module_resp(metadata, manifest, terraform, None, &s3_key, false);
     transact_module(clients, config, &module, &version_padded, false).await?;
+
+    clients
+        .provider_mirror
+        .ensure_providers_mirrored(&terraform.tf_lock_providers)
+        .await
+        .unwrap();
 
     Ok(catalog_trait::types::CatalogRef { id: s3_key })
 }
@@ -371,6 +386,12 @@ pub async fn execute_add_stack(
         true,
     );
     transact_module(clients, config, &module, &version_padded, true).await?;
+
+    clients
+        .provider_mirror
+        .ensure_providers_mirrored(&terraform.tf_lock_providers)
+        .await
+        .unwrap();
 
     Ok(catalog_trait::types::CatalogRef { id: s3_key })
 }

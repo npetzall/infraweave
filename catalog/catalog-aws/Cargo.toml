@@ -6,14 +6,18 @@ edition.workspace = true
 [dependencies]
 anyhow = { workspace = true }
 async-trait = { workspace = true }
+bytes = "1"
 serde = { version = "1.0", features = ["derive"] }
 serde_yaml = "0.8"
 aws-config = { version = "1.5", features = ["behavior-version-latest"] }
 aws-sdk-dynamodb = "1.60"
+aws-sdk-lambda = "1.60"
 aws-sdk-s3 = "1.65"
 base64 = "0.22"
+catalog-aws-provider-mirror = { path = "../catalog-aws-provider-mirror" }
 catalog-trait = { path = "../catalog-trait" }
 log = "0.4"
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
 serde_json = "1.0"
 semver = "1.0"
 serde_dynamo = { version = "4", features = ["aws-sdk-dynamodb+1"] }
@@ -23,6 +27,7 @@ serde_dynamo = { version = "4", features = ["aws-sdk-dynamodb+1"] }
 serde_json = "1.0"
 semver = "1.0"
 tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
+wiremock = "0.6"
 
 [lints]
 workspace = true

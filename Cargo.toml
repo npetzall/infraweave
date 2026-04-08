@@ -22,11 +22,13 @@ members = [
     "graph",
     "catalog/catalog-trait",
     "catalog/catalog-aws-apigw",
+    "catalog/catalog-aws-provider-mirror",
     "catalog/catalog-aws",
     "catalog/catalog-http",
     "catalog/catalog-mem",
     "catalog/catalog-client",
     "catalog/catalog-client-aws-http",
+    "catalog/registry-client",
 ]
 
 [workspace.package]

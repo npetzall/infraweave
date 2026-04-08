@@ -1,4 +1,4 @@
-//! AWS client construction (DynamoDB, S3) with presign configuration.
+//! AWS client construction (DynamoDB, S3, optional Lambda for provider mirror) with presign configuration.
 //!
 //! Environment-aware behavior for local test parity (same assumptions as `env_aws_direct`).
 
@@ -7,12 +7,19 @@ use aws_sdk_s3::presigning::PresigningConfig;
 use std::time::Duration;
 
 use crate::config::{Config, DEFAULT_PRESIGN_EXPIRY_SECS};
+use crate::mirror::AwsProviderMirror;
 
 /// AWS clients bundle for catalog operations.
 #[derive(Clone)]
 pub struct AwsClients {
     pub dynamodb: aws_sdk_dynamodb::Client,
     pub s3: aws_sdk_s3::Client,
+    /// Built only when [`Config::provider_mirror_should_invoke`] is true at client construction time.
+    pub lambda: Option<aws_sdk_lambda::Client>,
+    /// Shared HTTP client (registry calls for `provider_mirror` projection, etc.).
+    pub http: reqwest::Client,
+    /// Built once in [`Self::from_config`] (S3 resolve + Lambda or no-op populate).
+    pub provider_mirror: AwsProviderMirror,
     config: Config,
 }
 
@@ -88,9 +95,63 @@ impl AwsClients {
             aws_sdk_s3::Client::new(&sdk_config)
         };
 
+        let provider_mirror_should_invoke = config.provider_mirror_should_invoke();
+
+        let lambda_region = aws_config::Region::new(config.region.clone());
+        let lambda = if provider_mirror_should_invoke {
+            let client = if config.local_mode {
+                if let Some(endpoint) = config.lambda_endpoint.as_ref() {
+                    log::info!("Local mode: Using Lambda endpoint: {}", endpoint);
+                    let credentials = aws_sdk_lambda::config::Credentials::new(
+                        std::env::var("AWS_ACCESS_KEY_ID").unwrap_or_else(|_| "minio".to_string()),
+                        std::env::var("AWS_SECRET_ACCESS_KEY")
+                            .unwrap_or_else(|_| "minio123".to_string()),
+                        None,
+                        None,
+                        "local",
+                    );
+                    let cfg = aws_sdk_lambda::config::Config::builder()
+                        .behavior_version(aws_sdk_lambda::config::BehaviorVersion::latest())
+                        .credentials_provider(credentials)
+                        .region(lambda_region.clone())
+                        .endpoint_url(endpoint)
+                        .build();
+                    aws_sdk_lambda::Client::from_conf(cfg)
+                } else {
+                    let mut loader = aws_config::from_env();
+                    loader = loader.region(lambda_region.clone());
+                    let sdk_config = loader.load().await;
+                    aws_sdk_lambda::Client::new(&sdk_config)
+                }
+            } else {
+                let mut loader = aws_config::from_env();
+                loader = loader.region(lambda_region);
+                let sdk_config = loader.load().await;
+                aws_sdk_lambda::Client::new(&sdk_config)
+            };
+            Some(client)
+        } else {
+            None
+        };
+
+        let http = reqwest::Client::builder()
+            .user_agent("infraweave/catalog-aws")
+            .build()
+            .map_err(|e| anyhow::anyhow!("reqwest::Client build failed: {e}"))?;
+
+        let presigning_for_mirror = PresigningConfig::expires_in(config.presign_expiry).expect(
+            "presign expiry must be between 1s and 604800s (7 days); \
+             CATALOG_PRESIGN_EXPIRY_SECS should be in that range",
+        );
+        let provider_mirror =
+            crate::mirror::build_aws_provider_mirror(&lambda, &s3, &config, presigning_for_mirror);
+
         Ok(Self {
             dynamodb,
             s3,
+            lambda,
+            http,
+            provider_mirror,
             config,
         })
     }
@@ -111,6 +172,12 @@ impl AwsClients {
     /// Reference to underlying config.
     pub fn config(&self) -> &Config {
         &self.config
+    }
+
+    /// S3 bucket for mirrored Terraform registry artifacts (`provider_mirror` projection).
+    #[must_use]
+    pub fn provider_mirror_bucket(&self) -> &str {
+        &self.config.provider_mirror_bucket
     }
 }
 
