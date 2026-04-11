@@ -22,6 +22,7 @@ members = [
     "utils",
     "integration-tests",
     "graph",
+    "catalog/registry-client",
 ]
 
 [workspace.package]
