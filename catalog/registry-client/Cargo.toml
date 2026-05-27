@@ -2,7 +2,7 @@
 name = "registry-client"
 version.workspace = true
 edition.workspace = true
-description = "Minimal OpenTofu provider registry client: download a known version for given platforms, verify SHA256SUMS + GPG"
+description = "OpenTofu registry client: download known provider versions (SHA256SUMS + GPG) and module versions (HTTP archive)"
 
 [dependencies]
 reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls", "stream"] }

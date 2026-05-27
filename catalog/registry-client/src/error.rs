@@ -47,6 +47,24 @@ pub enum ProviderRegistryError {
         source: serde_json::Error,
     },
 
+    #[error("unexpected Content-Type for {url}: {content_type:?} (expected application/json)")]
+    UnexpectedContentType {
+        url: String,
+        content_type: Option<String>,
+    },
+
+    #[error("package metadata at {url} does not match requested platform: expected {expected_os}/{expected_arch}, got {got_os}/{got_arch}")]
+    PlatformMetadataMismatch {
+        url: String,
+        expected_os: String,
+        expected_arch: String,
+        got_os: String,
+        got_arch: String,
+    },
+
+    #[error("artifact URL must use HTTPS for non-loopback hosts: {url}")]
+    InsecureArtifactUrl { url: String },
+
     #[error("invalid base URL: {0}")]
     InvalidBaseUrl(#[from] url::ParseError),
 
@@ -58,6 +76,17 @@ pub enum ProviderRegistryError {
 
     #[error("service discovery document at {url} did not define providers.v1")]
     MissingProvidersV1 { url: String },
+
+    #[error("service discovery document at {url} did not define modules.v1")]
+    MissingModulesV1 { url: String },
+
+    #[error(
+        "module download at {url} did not return a source location (X-Terraform-Get or location)"
+    )]
+    MissingModuleSourceLocation { url: String },
+
+    #[error("unsupported module source location scheme (only http/https supported): {location}")]
+    UnsupportedModuleSourceScheme { location: String },
 
     #[error("could not resolve relative URL {reference} against {base}: {source}")]
     UrlResolve {
@@ -148,5 +177,29 @@ mod tests {
         let inner = ProviderRegistryError::EmptyRegistryHost;
         let err = PlatformDownloadError::Download(inner);
         assert!(err.to_string().contains("download failed"));
+    }
+
+    #[test]
+    fn unexpected_content_type_display_includes_url() {
+        let err = ProviderRegistryError::UnexpectedContentType {
+            url: "http://127.0.0.1:1/.well-known/terraform.json".into(),
+            content_type: Some("text/plain".into()),
+        };
+        let msg = err.to_string();
+        assert!(msg.contains("text/plain"));
+        assert!(msg.contains("terraform.json"));
+    }
+
+    #[test]
+    fn platform_metadata_mismatch_display() {
+        let err = ProviderRegistryError::PlatformMetadataMismatch {
+            url: "http://x/meta".into(),
+            expected_os: "linux".into(),
+            expected_arch: "amd64".into(),
+            got_os: "darwin".into(),
+            got_arch: "arm64".into(),
+        };
+        assert!(err.to_string().contains("linux/amd64"));
+        assert!(err.to_string().contains("darwin/arm64"));
     }
 }

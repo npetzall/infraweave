@@ -171,6 +171,9 @@ mod tests {
         let mut kr = GpgKeyring::new();
         kr.add_armored("-----BEGIN PGP PUBLIC KEY BLOCK-----\nno end");
         assert_eq!(kr.blocks().len(), 1);
-        assert_eq!(kr.blocks()[0], "-----BEGIN PGP PUBLIC KEY BLOCK-----\nno end");
+        assert_eq!(
+            kr.blocks()[0],
+            "-----BEGIN PGP PUBLIC KEY BLOCK-----\nno end"
+        );
     }
 }

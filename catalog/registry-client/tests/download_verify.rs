@@ -10,7 +10,7 @@ use pgp::crypto::hash::HashAlgorithm;
 use pgp::types::{KeyDetails, Password};
 use rand::SeedableRng;
 use rand_chacha::ChaCha8Rng;
-use registry_client::{FileArtifact, PlatformDownloadError, Registry, RegistryClient};
+use registry_client::{PlatformDownloadError, Registry, RegistryClient};
 use sha2::{Digest, Sha256};
 use tempfile::tempdir;
 use wiremock::matchers::{method, path};
@@ -30,9 +30,7 @@ fn build_zip_bytes() -> Vec<u8> {
         .expect("start_file");
     zip.write_all(b"synthetic provider payload for tests")
         .expect("write_all");
-    zip.finish()
-        .expect("finish")
-        .into_inner()
+    zip.finish().expect("finish").into_inner()
 }
 
 fn generate_signing_key(rng: &mut ChaCha8Rng) -> SignedSecretKey {
@@ -138,13 +136,7 @@ async fn download_and_verify_against_in_memory_mock() {
 
     let dir = tempdir().expect("tempdir");
     let report = provider_client
-        .download(
-            NS,
-            PROVIDER,
-            VERSION,
-            &[PLATFORM],
-            dir.path().to_path_buf(),
-        )
+        .download(NS, PROVIDER, VERSION, &[PLATFORM], dir.path().to_path_buf())
         .await
         .expect("download");
 
@@ -176,7 +168,10 @@ async fn download_and_verify_against_in_memory_mock() {
         .iter()
         .find(|a| a.filename == ZIP_NAME)
         .expect("zip artifact");
-    assert_eq!(std::fs::read(&zip_artifact.path).expect("artifact path read"), zip_bytes);
+    assert_eq!(
+        std::fs::read(&zip_artifact.path).expect("artifact path read"),
+        zip_bytes
+    );
 
     let bad = report.get("missing");
     assert!(bad.is_none());
@@ -212,13 +207,7 @@ async fn download_propagates_mock_http_error_for_package_metadata() {
 
     let dir = tempdir().expect("tempdir");
     let report = provider_client
-        .download(
-            NS,
-            PROVIDER,
-            VERSION,
-            &[PLATFORM],
-            dir.path().to_path_buf(),
-        )
+        .download(NS, PROVIDER, VERSION, &[PLATFORM], dir.path().to_path_buf())
         .await
         .expect("outer result");
 
