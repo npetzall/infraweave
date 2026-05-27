@@ -1,0 +1,216 @@
+openapi: 3.1.0
+info:
+  title: OCI Distribution Spec API
+  description: API protocol to facilitate and standardize the distribution of content based on OCI Distribution Spec v1.1.1.
+  version: 1.1.1
+servers:
+  - url: /v2
+    description: Base path for the OCI Distribution API.
+
+paths:
+  /:
+    get:
+      summary: Base Check
+      description: Check whether or not the registry implements the specification [2].
+      responses:
+        '200':
+          description: The registry implements the specification [2].
+        '401':
+          description: Authentication required [2].
+        '404':
+          description: Not found [2].
+
+  /{name}/blobs/{digest}:
+    parameters:
+      - name: name
+        in: path
+        required: true
+        schema:
+          type: string
+        description: The namespace of the repository [5].
+      - name: digest
+        in: path
+        required: true
+        schema:
+          type: string
+        description: The digest of the blob [5].
+    get:
+      summary: Pull Blob
+      description: Pull a blob from the registry [5].
+      responses:
+        '200':
+          description: Successful pull. Returns the blob in the response body [5].
+          headers:
+            Docker-Content-Digest:
+              schema:
+                type: string
+              description: Canonical digest of the blob [5].
+        '404':
+          description: Blob not found [6].
+    head:
+      summary: Check Blob Existence
+      description: Verify if a blob exists in the registry [2].
+      responses:
+        '200':
+          description: Blob exists.
+        '404':
+          description: Blob not found.
+    delete:
+      summary: Delete Blob
+      description: Delete a blob from the repository [7].
+      responses:
+        '202':
+          description: Deletion accepted [7].
+        '405':
+          description: Deletion disabled or unsupported [7].
+
+  /{name}/manifests/{reference}:
+    parameters:
+      - name: name
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: reference
+        in: path
+        required: true
+        schema:
+          type: string
+        description: A tag or a manifest digest [8].
+    get:
+      summary: Pull Manifest
+      description: Pull a manifest by tag or digest [8].
+      responses:
+        '200':
+          description: Successful pull. Returns the manifest [9].
+          content:
+            application/vnd.oci.image.manifest.v1+json: {}
+            application/vnd.oci.image.index.v1+json: {}
+        '404':
+          description: Manifest not found [5].
+    put:
+      summary: Push Manifest
+      description: Push a manifest to the registry [10].
+      responses:
+        '201':
+          description: Manifest created [11].
+          headers:
+            Location:
+              schema:
+                type: string
+              description: Pullable manifest URL [11].
+    delete:
+      summary: Delete Manifest
+      description: Delete a manifest and its associated tags [12].
+      responses:
+        '202':
+          description: Deletion accepted [12].
+        '404':
+          description: Manifest or repository not found [12].
+
+  /{name}/blobs/uploads/:
+    post:
+      summary: Initiate Blob Upload
+      description: Initiate a session to upload a blob [13].
+      parameters:
+        - name: mount
+          in: query
+          schema:
+            type: string
+          description: Digest to mount from another repository [14].
+        - name: from
+          in: query
+          schema:
+            type: string
+          description: Namespace to mount the blob from [14].
+        - name: digest
+          in: query
+          schema:
+            type: string
+          description: For monolithic single-POST uploads [15].
+      responses:
+        '202':
+          description: Upload session started [16].
+          headers:
+            Location:
+              schema:
+                type: string
+              description: Upload URL including session ID [16].
+        '201':
+          description: Blob mounted or uploaded monolithically [17, 18].
+
+  /{name}/tags/list:
+    get:
+      summary: List Tags
+      description: Fetch a list of tags in a repository [19, 20].
+      parameters:
+        - name: n
+          in: query
+          schema:
+            type: integer
+          description: Number of results to return [21].
+        - name: last
+          in: query
+          schema:
+            type: string
+          description: Result to start after [22].
+      responses:
+        '200':
+          description: JSON tag list [20].
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  tags:
+                    type: array
+                    items:
+                      type: string
+
+  /{name}/referrers/{digest}:
+    get:
+      summary: List Referrers
+      description: Fetch artifacts that reference a given manifest digest [23, 24].
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: digest
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: artifactType
+          in: query
+          schema:
+            type: string
+          description: Filter results by artifact type [25].
+      responses:
+        '200':
+          description: An image index containing a list of referring descriptors [26].
+          content:
+            application/vnd.oci.image.index.v1+json: {}
+        '400':
+          description: Invalid digest syntax [23].
+
+components:
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              code:
+                type: string
+                enum: [BLOB_UNKNOWN, MANIFEST_INVALID, NAME_INVALID, UNAUTHORIZED, DENIED, MANIFEST_UNKNOWN]
+              message:
+                type: string
+              detail:
+                type: object

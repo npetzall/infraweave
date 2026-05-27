@@ -1,0 +1,44 @@
+openapi: 3.1.0
+info:
+  title: OpenTofu Remote Service Discovery API
+  version: 1.0.0
+  description: |
+    The entry point for discovering OpenTofu-native services. 
+    Discovery begins by forming a URL using the hostname with the https: scheme 
+    and the fixed path /.well-known/terraform.json.
+paths:
+  /.well-known/terraform.json:
+    get:
+      summary: Discover service endpoints
+      description: |
+        Returns a mapping of service identifiers to their respective base URLs. 
+        If this request fails (non-200 status, invalid JSON, or non-application/json media type), 
+        OpenTofu considers the host to not support native services. 
+        Credentials from a credentials_helper or environment variables are included in this request.
+      responses:
+        '200':
+          description: A JSON object containing service identifiers.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  login.v1:
+                    type: string
+                    description: Base URL for the login protocol version 1.
+                  modules.v1:
+                    type: string
+                    description: Base URL for the module registry API version 1.
+                  providers.v1:
+                    type: string
+                    description: Base URL for the provider registry API version 1.
+                required:
+                  - login.v1
+                  - modules.v1
+                  - providers.v1
+                additionalProperties:
+                  type: string
+              example:
+                login.v1: "/api/login/"
+                modules.v1: "/v1/modules/"
+                providers.v1: "/v1/providers/"

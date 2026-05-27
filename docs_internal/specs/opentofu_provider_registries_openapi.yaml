@@ -1,0 +1,159 @@
+openapi: 3.1.0
+info:
+  title: OpenTofu Provider Registry API
+  version: 1.0.0
+paths:
+  /{namespace}/{type}/versions:
+    get:
+      summary: List Available Versions
+      description: Returns all available versions for a provider.
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: type
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A list of available versions and supported platforms.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  versions:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        version:
+                          type: string
+                          description: Semantic Versioning 2.0 string.
+                        protocols:
+                          type: array
+                          items:
+                            type: string
+                          description: |
+                            Array of supported MAJOR.MINOR protocol versions. 
+                            Each major version must appear only once, representing 
+                            the highest minor version supported for that major.
+                        platforms:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              os:
+                                type: string
+                              arch:
+                                type: string
+  /{namespace}/{type}/{version}/download/{os}/{arch}:
+    get:
+      summary: Find a Provider Package
+      description: Returns download metadata for a specific provider platform package.
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: type
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: os
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: arch
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Metadata for downloading a specific provider package.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - protocols
+                  - os
+                  - arch
+                  - filename
+                  - download_url
+                  - shasums_url
+                  - shasums_signature_url
+                  - shasum
+                  - signing_keys
+                properties:
+                  protocols:
+                    type: array
+                    items:
+                      type: string
+                    description: Highest minor version supported for each major version.
+                  os:
+                    type: string
+                  arch:
+                    type: string
+                  filename:
+                    type: string
+                  download_url:
+                    type: string
+                  shasums_url:
+                    type: string
+                  shasums_signature_url:
+                    type: string
+                  shasum:
+                    type: string
+                  signing_keys:
+                    $ref: '#/components/schemas/signing_keys'
+                  packages:
+                    type: object
+                    description: |
+                      If included, metadata for ALL platforms for this provider version 
+                      must be provided to support dependency locking.
+                    properties:
+                      hashes:
+                        type: array
+                        items:
+                          type: string
+                        description: |
+                          List of valid hashes. Must include at least one 'zh:' 
+                          prefixed hash matching the shasum property.
+                      package_size:
+                        type: integer
+components:
+  schemas:
+    signing_keys:
+      type: object
+      required:
+        - gpg_public_keys
+      properties:
+        gpg_public_keys:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required:
+              - key_id
+              - ascii_armor
+            properties:
+              key_id:
+                type: string
+                description: Uppercase hexadecimal GPG key ID.
+              ascii_armor:
+                type: string
+                description: ASCII-armored GPG public key.
