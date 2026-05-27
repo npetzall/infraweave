@@ -1,0 +1,101 @@
+openapi: 3.1.0
+info:
+  title: OpenTofu Module Registry API
+  version: 1.0.0
+paths:
+  /{namespace}/{name}/{system}/versions:
+    get:
+      summary: List Available Versions
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: system
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A list of available versions for the module.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  modules:
+                    type: array
+                    description: |
+                      The requested module MUST be the first element in this array 
+                      to ensure forward compatibility with CLI expectations.
+                    items:
+                      type: object
+                      properties:
+                        versions:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              version:
+                                type: string
+                                description: SemVer 2.0 compatible string.
+  /{namespace}/{name}/{system}/{version}/download:
+    get:
+      summary: Download Source Code
+      description: |
+        Retrieves the module source location. The primary mechanism is the 
+        X-Terraform-Get header. A JSON body with a 'location' field is a valid fallback.
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: system
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: |
+            Recommended success response. The body is empty, and the source location 
+            is provided in the X-Terraform-Get header.
+          headers:
+            X-Terraform-Get:
+              description: The source location for the module download.
+              schema:
+                type: string
+        '200':
+          description: |
+            Success response utilizing a JSON body fallback. Note that the 
+            X-Terraform-Get header takes precedence if both are present.
+          headers:
+            X-Terraform-Get:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  location:
+                    type: string
+                    description: Fallback source location URL.
