@@ -13,7 +13,6 @@ env:
   DOCKER_IMAGE_MIRROR: ghcr.io/${{ github.repository }}
   CARGO_TERM_VERBOSE: true
   K8S_OPENAPI_ENABLED_VERSION: v1.31
-  NEXTEST_VERSION: 0.9.132
   # Previously exported by dtolnay/rust-toolchain; set explicitly now that we install via rustup.
   CARGO_INCREMENTAL: 0
   CARGO_TERM_COLOR: always
@@ -78,17 +77,21 @@ jobs:
           shared-key: "test"
           save-if: ${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) }}
 
-      - name: Install cargo-deny
-        run: cargo install cargo-deny@0.20.2 --locked
+      - name: Setup Socket Firewall
+        uses: osseco/setup-sfw-free@e1cbeae80920eb20b289196bb420d5f45a45ead1 # v1.15.6-0.2.0
+        with:
+          cache: ${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && 'true' || 'restore' }}
+
+      - name: Install project tools (cargo-deny, cargo-nextest, cross)
+        uses: osseco/setup-cargo-project-tools@853c6b7784f4309ea4a68701cdfcc87c7304d0fb # v5.6.0-0.4.0
+        with:
+          audit: true
 
       - name: Run cargo deny check advisories
         run: cargo deny check advisories --show-stats --hide-inclusion-graph
 
       - name: Run cargo deny check bans licenses sources
         run: cargo deny check bans licenses sources --show-stats --hide-inclusion-graph
-
-      - name: Install nextest
-        run: cargo install cargo-nextest --version ${{ env.NEXTEST_VERSION }} --locked
 
       - name: Build nextest archive
         run: cargo nextest archive --archive-file nextest-archive.tar.zst --cargo-profile ci-tests --locked
@@ -124,8 +127,13 @@ jobs:
           shared-key: "test"
           save-if: false
 
-      - name: Install nextest (should exist in cache)
-        run: cargo install cargo-nextest --version ${{ env.NEXTEST_VERSION }} --locked
+      - name: Setup Socket Firewall
+        uses: osseco/setup-sfw-free@e1cbeae80920eb20b289196bb420d5f45a45ead1 # v1.15.6-0.2.0
+        with:
+          cache: ${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && 'true' || 'restore' }}
+
+      - name: Install project tools (should exist in cache)
+        uses: osseco/setup-cargo-project-tools@853c6b7784f4309ea4a68701cdfcc87c7304d0fb # v5.6.0-0.4.0
 
       - name: Download archive
         uses: actions/download-artifact@v4
@@ -218,8 +226,13 @@ jobs:
           shared-key: "test"
           save-if: false
 
-      - name: Install nextest (should exist in cache)
-        run: cargo install cargo-nextest --version ${{ env.NEXTEST_VERSION }} --locked
+      - name: Setup Socket Firewall
+        uses: osseco/setup-sfw-free@e1cbeae80920eb20b289196bb420d5f45a45ead1 # v1.15.6-0.2.0
+        with:
+          cache: ${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && 'true' || 'restore' }}
+
+      - name: Install project tools (should exist in cache)
+        uses: osseco/setup-cargo-project-tools@853c6b7784f4309ea4a68701cdfcc87c7304d0fb # v5.6.0-0.4.0
 
       - name: Download archive
         uses: actions/download-artifact@v4
