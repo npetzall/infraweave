@@ -10,7 +10,7 @@ permissions:
   packages: read
 
 env:
-  DOCKER_IMAGE_MIRROR: ghcr.io/${{ github.repository }}
+  DOCKER_IMAGE_MIRROR: ghcr.io/infraweave-io/infraweave
   CARGO_TERM_VERBOSE: true
   K8S_OPENAPI_ENABLED_VERSION: v1.31
   # Previously exported by dtolnay/rust-toolchain; set explicitly now that we install via rustup.
