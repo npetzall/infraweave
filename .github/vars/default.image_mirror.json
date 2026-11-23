@@ -30,5 +30,9 @@
     {
         "from": "jaegertracing/all-in-one:1.62.0",
         "to": "jaeger-all-in-one:1.62.0"
+    },
+    {
+        "from": "public.ecr.aws/awsguru/aws-lambda-adapter:1.0.0",
+        "to": "aws-lambda-adapter:1.0.0"
     }
 ]
