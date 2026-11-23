@@ -53,8 +53,10 @@ jobs:
   build-tests:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - name: Checkout source
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Free up disk space
         uses: ./.github/actions/free-disk-space
@@ -106,26 +108,18 @@ jobs:
     needs: build-tests
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - name: Checkout source
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Setup OpenTofu
         uses: opentofu/setup-opentofu@9d84900f3238fab8cd84ce47d658d25dd008be2f
         with:
           tofu_version: 1.11.4
 
-      - name: Install Rust toolchain (from rust-toolchain.toml)
-        shell: bash
-        run: |
-          rustup set profile minimal
-          rustup toolchain install
-          rustc -vV
-
-      - name: Rust Cache
-        uses: Swatinem/rust-cache@f13886b937689c021905a6b90929199931d60db1 # v2.8.1
-        with:
-          shared-key: "test"
-          save-if: false
+      - name: Alias tofu as terraform
+        run: sudo ln -sf $(which tofu) /usr/local/bin/terraform
 
       - name: Setup Socket Firewall
         uses: osseco/setup-sfw-free@e1cbeae80920eb20b289196bb420d5f45a45ead1 # v1.15.6-0.2.0
@@ -150,8 +144,10 @@ jobs:
     outputs:
       tests: ${{ steps.set-matrix.outputs.tests }}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - name: Checkout source
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Create integration tests list
         id: set-matrix
@@ -190,13 +186,10 @@ jobs:
             CONCURRENCY_LIMIT: 1
         test: ${{ fromJson(needs.integration-tests-matrix.outputs.tests) }}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Free up disk space
-        uses: ./.github/actions/free-disk-space
+      - name: Checkout source
+        uses: actions/checkout@v7
         with:
-          level: "maximum"
+          persist-credentials: false
 
       - name: Setup OpenTofu
         uses: opentofu/setup-opentofu@9d84900f3238fab8cd84ce47d658d25dd008be2f
@@ -212,19 +205,6 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Install Rust toolchain (from rust-toolchain.toml)
-        shell: bash
-        run: |
-          rustup set profile minimal
-          rustup toolchain install
-          rustc -vV
-
-      - name: Rust Cache
-        uses: Swatinem/rust-cache@f13886b937689c021905a6b90929199931d60db1 # v2.8.1
-        with:
-          shared-key: "test"
-          save-if: false
 
       - name: Setup Socket Firewall
         uses: osseco/setup-sfw-free@e1cbeae80920eb20b289196bb420d5f45a45ead1 # v1.15.6-0.2.0
